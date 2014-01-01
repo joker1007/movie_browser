@@ -1,0 +1,29 @@
+-@val s: skinny.Skinny
+-@val fileinfos: Seq[model.Fileinfo]
+
+%h3 #{s.i18n.get("fileinfo.list")}
+%hr
+-for (notice <- s.flash.notice)
+  %p(class="alert alert-info") #{notice}
+
+%table(class="table table-bordered")
+  %thead
+    %tr
+      %th #{s.i18n.get("fileinfo.id")}
+      %th #{s.i18n.get("fileinfo.md5")}
+      %th #{s.i18n.get("fileinfo.fullpath")}
+      %th #{s.i18n.get("fileinfo.filesize")}
+      %th
+  %tbody
+  -for (fileinfo <- fileinfos)
+    %tr
+      %td #{fileinfo.id}
+      %td #{fileinfo.md5}
+      %td #{fileinfo.fullpath}
+      %td #{fileinfo.filesize}
+      %td
+        %a(href={url(FileinfosController.showUrl, "id" -> fileinfo.id.toString)} class="btn btn-default") #{s.i18n.get("detail")}
+        %a(href={url(FileinfosController.editUrl, "id" -> fileinfo.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+        %a(data-method="delete" data-confirm={s.i18n.get("fileinfo.delete.confirm")} href={url(FileinfosController.deleteUrl, "id" -> fileinfo.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}
+
+%a(href={url(FileinfosController.newUrl)} class="btn btn-primary") #{s.i18n.get("new")}

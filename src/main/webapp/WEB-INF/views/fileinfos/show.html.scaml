@@ -1,0 +1,27 @@
+-@val fileinfo: model.Fileinfo
+-@val s: skinny.Skinny
+
+%h3 #{s.i18n.get("fileinfo.detail")}
+%hr
+-for (notice <- s.flash.notice)
+  %p(class="alert alert-info") #{notice}
+%table(class="table table-bordered")
+  %thead
+    %tr
+      %th #{s.i18n.get("fileinfo.id")}
+      %td #{fileinfo.id}
+    %tr
+      %th #{s.i18n.get("fileinfo.md5")}
+      %td #{fileinfo.md5}
+    %tr
+      %th #{s.i18n.get("fileinfo.fullpath")}
+      %td #{fileinfo.fullpath}
+    %tr
+      %th #{s.i18n.get("fileinfo.filesize")}
+      %td #{fileinfo.filesize}
+
+%hr
+%div(class="form-actions")
+  %a(class="btn btn-default" href={url(FileinfosController.indexUrl)}) #{s.i18n.get("backToList")}
+  %a(href={url(FileinfosController.editUrl, "id" -> fileinfo.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+  %a(data-method="delete" data-confirm={s.i18n.get("fileinfo.delete.confirm")} href={url(FileinfosController.deleteUrl, "id" -> fileinfo.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}

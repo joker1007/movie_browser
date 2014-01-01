@@ -1,0 +1,21 @@
+-@val s: skinny.Skinny
+
+%div(class="form-group")
+  %label(class="control-label" for="md5") #{s.i18n.get("fileinfo.md5")}
+  %div(class="controls row")
+    %div(class="col-xs-12")
+      %input(type="text" name="md5" class="form-control" value={s.params.md5})
+%div(class="form-group")
+  %label(class="control-label" for="fullpath") #{s.i18n.get("fileinfo.fullpath")}
+  %div(class="controls row")
+    %div(class="col-xs-12")
+      %input(type="text" name="fullpath" class="form-control" value={s.params.fullpath})
+%div(class="form-group")
+  %label(class="control-label" for="filesize") #{s.i18n.get("fileinfo.filesize")}
+  %div(class="controls row")
+    %div(class="col-xs-12")
+      %input(type="text" name="filesize" class="form-control" value={s.params.filesize})
+%div(class="form-actions")
+  =unescape(s.csrfHiddenInputTag)
+  %input(type="submit" class="btn btn-primary" value={s.i18n.get("submit")})
+    %a(class="btn btn-default" href={url(FileinfosController.indexUrl)}) #{s.i18n.get("cancel")}
