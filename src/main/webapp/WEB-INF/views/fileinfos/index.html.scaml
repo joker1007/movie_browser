@@ -14,6 +14,7 @@
       %th #{s.i18n.get("fileinfo.fullpath")}
       %th #{s.i18n.get("fileinfo.filesize")}
       %th
+      %th
   %tbody
   -for (fileinfo <- fileinfos)
     %tr
@@ -21,6 +22,8 @@
       %td #{fileinfo.md5}
       %td #{fileinfo.fullpath}
       %td #{fileinfo.filesize}
+      %td
+        %img(src={url(ThumbnailsController.showUrl, "hash" -> fileinfo.md5)})
       %td
         %a(href={url(FileinfosController.showUrl, "id" -> fileinfo.id.toString)} class="btn btn-default") #{s.i18n.get("detail")}
         %a(href={url(FileinfosController.editUrl, "id" -> fileinfo.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}

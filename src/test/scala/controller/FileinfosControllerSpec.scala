@@ -4,11 +4,17 @@ import org.scalatra.test.scalatest._
 import skinny._, test._
 import org.joda.time._
 import model._
+import org.scalatest.BeforeAndAfter
+import scalikejdbc._, SQLInterpolation._
 
-class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport with DBSettings {
+class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport with DBSettings with BeforeAndAfter {
   addFilter(FileinfosController, "/*")
 
   def fileinfo = FactoryGirl(Fileinfo).create()
+
+  before {
+    Fileinfo.deleteBy(sqls"true = true")
+  }
 
   it should "show fileinfos" in {
     get("/fileinfos") {
@@ -26,6 +32,7 @@ class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport wi
   }
 
   it should "show a fileinfo in detail" in {
+    val fileinfo = FactoryGirl(Fileinfo).create()
     get(s"/fileinfos/${fileinfo.id}") {
       status should equal(200)
     }
@@ -64,6 +71,7 @@ class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport wi
   }
 
   it should "update a fileinfo" in {
+    val fileinfo = FactoryGirl(Fileinfo).create()
     put(s"/fileinfos/${fileinfo.id}", "md5" -> "dummy","fullpath" -> "dummy","filesize" -> "dummy") {
       status should equal(403)
     }
