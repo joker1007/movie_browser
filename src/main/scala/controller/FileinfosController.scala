@@ -3,6 +3,7 @@ package controller
 import skinny._
 import skinny.validator._
 import model.Fileinfo
+import scalikejdbc._, SQLInterpolation._
 
 object FileinfosController extends SkinnyResource {
   protectFromForgery()
@@ -10,6 +11,18 @@ object FileinfosController extends SkinnyResource {
   override def model = Fileinfo
   override def resourcesName = "fileinfos"
   override def resourceName = "fileinfo"
+
+  override def showResources()(implicit format: Format = Format.HTML): Any = withFormat(format) {
+    val query = params.getAs[String]("q")
+    query match {
+      case Some(q) =>
+        val f = Fileinfo.defaultAlias
+        val resources = model.searchByPath(q)
+        set(resourcesName, resources)
+      case None => set(resourcesName, model.findAllModels())
+    }
+    render(s"/${resourcesName}/index")
+  }
 
   override def createForm = validation(createParams,
     paramKey("md5") is required & maxLength(512),

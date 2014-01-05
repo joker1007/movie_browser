@@ -4,6 +4,11 @@
 -for (notice <- s.flash.notice)
   %p(class="alert alert-info") #{notice}
 
+%form#search-form.form-inline(action={url(FileinfosController.indexUrl)} method="get")
+  .form-group
+    %input.form-control(type="text" name="q" placeholder="Search Word")
+  %input.btn.btn-primary(type="submit" value="Search")
+
 %table(class="table table-bordered")
   %tbody
   -for (fileinfo <- fileinfos)

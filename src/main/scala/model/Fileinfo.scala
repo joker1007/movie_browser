@@ -182,4 +182,8 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
 
     Some(fileinfoId)
   }
+
+  def searchByPath(pathString: String): List[Fileinfo] = {
+    findAllBy(sqls.like(defaultAlias.fullpath, s"%$pathString%"))
+  }
 }
