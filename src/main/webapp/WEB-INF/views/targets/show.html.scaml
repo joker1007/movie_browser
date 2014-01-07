@@ -1,0 +1,24 @@
+-@val target: model.Target
+-@val s: skinny.Skinny
+
+%h3 #{s.i18n.get("target.detail")}
+%hr
+-for (notice <- s.flash.notice)
+  %p(class="alert alert-info") #{notice}
+%table(class="table table-bordered")
+  %thead
+    %tr
+      %th #{s.i18n.get("target.id")}
+      %td #{target.id}
+    %tr
+      %th #{s.i18n.get("target.fullpath")}
+      %td #{target.fullpath}
+    %tr
+      %th #{s.i18n.get("target.lastUpdatedAt")}
+      %td #{target.lastUpdatedAt}
+
+%hr
+%div(class="form-actions")
+  %a(class="btn btn-default" href={url(TargetsController.indexUrl)}) #{s.i18n.get("backToList")}
+  %a(href={url(TargetsController.editUrl, "id" -> target.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+  %a(data-method="delete" data-confirm={s.i18n.get("target.delete.confirm")} href={url(TargetsController.deleteUrl, "id" -> target.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}

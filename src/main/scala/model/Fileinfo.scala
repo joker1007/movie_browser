@@ -51,7 +51,7 @@ case class Fileinfo(
   def isArchive(): Boolean = Fileinfo.ARCHIVE_EXTENSIONS.contains(extension)
   def extension: String = Path(fullpath, '/').extension.getOrElse("")
 
-  def createThumbnail(percentage: Int = 10, width: Int = 240, count:Int = 6, force: Boolean = false) {
+  def createThumbnail(percentage: Int = 10, width: Int = 240, count:Int = 4, force: Boolean = false) {
     val t = Thumbnail.defaultAlias
     val oThumbnail = Thumbnail.findBy(sqls.eq(t.md5, md5))
 
@@ -67,9 +67,12 @@ case class Fileinfo(
     val tempDir = Path.createTempDirectory()
     this match {
       case IsMovie(f) =>
-        val merged = createMovieThumbnail(tempDir, percentage, width, count)
-        val data = merged.byteArray
-        createThumbnailModel(data)
+        createMovieThumbnail(tempDir, percentage, width, count) match {
+          case Left(throwable) => print("Error: "); println(throwable)
+          case Right(merged) =>
+            val data = merged.byteArray
+            createThumbnailModel(data)
+        }
       case IsZip(f) =>
         createZipThumbnail(tempDir, width, count) match {
           case Left(throwable) => print("Error: "); println(throwable)
@@ -81,20 +84,22 @@ case class Fileinfo(
     }
   }
 
-  def createMovieThumbnail(tempDir: Path, percentage: Int = 10, width: Int = 240, count:Int = 6): Path = {
+  def createMovieThumbnail(tempDir: Path, percentage: Int = 10, width: Int = 240, count:Int = 4): Either[Throwable, Path] = {
     val convertCmd: ArrayBuffer[String] = ArrayBuffer("convert", "+append")
-    for (i <- 1 to count) {
-      val output = tempDir / s"${md5}_$i.jpg"
-      Seq("ffmpegthumbnailer", "-s", s"$width", "-t", s"${percentage * i}%", "-i", fullpath, "-o", output.path).!!
-      convertCmd += output.path
+    allCatch either {
+      for (i <- 1 to count) {
+        val output = tempDir / s"${md5}_$i.jpg"
+        Seq("ffmpegthumbnailer", "-s", s"$width", "-t", s"${percentage * i}%", "-i", fullpath, "-o", output.path).!!
+        convertCmd += output.path
+      }
+      val merged = tempDir / s"$md5.jpg"
+      convertCmd += merged.path
+      convertCmd.!!
+      merged
     }
-    val merged = tempDir / s"$md5.jpg"
-    convertCmd += merged.path
-    convertCmd.!!
-    merged
   }
 
-  def createZipThumbnail(tempDir: Path, width: Int = 240, count:Int = 6): Either[Throwable,Path] = {
+  def createZipThumbnail(tempDir: Path, width: Int = 240, count:Int = 4): Either[Throwable,Path] = {
     val file = new JFile(fullpath)
     val zis = new ZipInputStream(new FileInputStream(file))
     allCatch either {

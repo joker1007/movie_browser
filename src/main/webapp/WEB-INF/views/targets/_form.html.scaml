@@ -1,0 +1,12 @@
+-@val s: skinny.Skinny
+
+%div(class="form-group")
+  %label(class="control-label" for="fullpath") #{s.i18n.get("target.fullpath")}
+  %div(class="controls row")
+    %div(class="col-xs-12")
+      %input(type="text" name="fullpath" class="form-control" value={s.params.fullpath})
+
+%div(class="form-actions")
+  =unescape(s.csrfHiddenInputTag)
+  %input(type="submit" class="btn btn-primary" value={s.i18n.get("submit")})
+    %a(class="btn btn-default" href={url(TargetsController.indexUrl)}) #{s.i18n.get("cancel")}

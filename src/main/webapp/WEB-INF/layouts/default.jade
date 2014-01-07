@@ -9,6 +9,13 @@ html(lang="ja")
     link(rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.1/css/bootstrap.min.css")
     link(rel="stylesheet" href="/assets/css/main.css")
   body
+    nav.navbar.navbar-inverse.navbar-static-top
+      .navbar-header
+        a.navbar-brand(href={uri("/")}) Movie Browser
+      .collapse.navbar-collapse
+        ul.nav.navbar-nav
+          li
+            a(href={url(TargetsController.indexUrl)}) ディレクトリ登録
     div#main.container
       =unescape(body)
       hr

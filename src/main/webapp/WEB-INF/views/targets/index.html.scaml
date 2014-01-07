@@ -1,0 +1,32 @@
+-@val s: skinny.Skinny
+-@val targets: Seq[model.Target]
+
+%h3 #{s.i18n.get("target.list")}
+%hr
+-for (notice <- s.flash.notice)
+  %p(class="alert alert-info") #{notice}
+
+%table(class="table table-bordered")
+  %thead
+    %tr
+      %th #{s.i18n.get("target.id")}
+      %th #{s.i18n.get("target.fullpath")}
+      %th #{s.i18n.get("target.lastUpdatedAt")}
+      %th
+      %th
+  %tbody
+  -for (target <- targets)
+    %tr
+      %td #{target.id}
+      %td #{target.fullpath}
+      %td #{target.lastUpdatedAt}
+      %td
+        %form(action="/gathering" method="post")
+          %input(type="hidden" name="id" value={target.id})
+          %input.btn.btn-default(type="submit" value="Gather")
+      %td
+        %a(href={url(TargetsController.showUrl, "id" -> target.id.toString)} class="btn btn-default") #{s.i18n.get("detail")}
+        %a(href={url(TargetsController.editUrl, "id" -> target.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+        %a(data-method="delete" data-confirm={s.i18n.get("target.delete.confirm")} href={url(TargetsController.deleteUrl, "id" -> target.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}
+
+%a(href={url(TargetsController.newUrl)} class="btn btn-primary") #{s.i18n.get("new")}

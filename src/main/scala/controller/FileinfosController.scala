@@ -50,4 +50,5 @@ object FileinfosController extends SkinnyResource {
     "filesize" -> ParamType.Long
   )
 
+  val rootUrl = get("/")(showResources).as('root)
 }
