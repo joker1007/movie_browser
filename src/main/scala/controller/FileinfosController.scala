@@ -14,12 +14,15 @@ object FileinfosController extends SkinnyResource {
 
   override def showResources()(implicit format: Format = Format.HTML): Any = withFormat(format) {
     val query = params.getAs[String]("q")
+    val page = params.getAs[Int]("page") getOrElse 1
+    println(page)
+    val f = Fileinfo.defaultAlias
     query match {
       case Some(q) =>
-        val f = Fileinfo.defaultAlias
         val resources = model.searchByPath(q)
         set(resourcesName, resources)
-      case None => set(resourcesName, model.findAllModels())
+      case None =>
+        set(resourcesName, model.findAllByPaging(sqls"1 = 1", Fileinfo.PER_PAGE, (page - 1) * Fileinfo.PER_PAGE, sqls"${f.fullpath} asc"))
     }
     render(s"/${resourcesName}/index")
   }

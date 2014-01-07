@@ -143,6 +143,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   override val tableName = "fileinfos"
   override val defaultAlias = createAlias("f")
 
+  val PER_PAGE = 200
   val READ_LIMIT = 1024 * 1024 * 3 // 3MB
   val MOVIE_EXTENSIONS = Array("mp4", "m4v", "mpg", "avi", "wmv", "ogm", "ogg", "asf")
   val ARCHIVE_EXTENSIONS = Array("zip", "rar")
@@ -188,7 +189,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     Some(fileinfoId)
   }
 
-  def searchByPath(pathString: String): List[Fileinfo] = {
-    findAllBy(sqls.like(defaultAlias.fullpath, s"%$pathString%"))
+  def searchByPath(pathString: String, page: Int = 1): List[Fileinfo] = {
+    findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc")
   }
 }
