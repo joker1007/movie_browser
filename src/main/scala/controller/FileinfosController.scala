@@ -19,7 +19,7 @@ object FileinfosController extends SkinnyResource {
     val f = Fileinfo.defaultAlias
     query match {
       case Some(q) =>
-        val resources = model.searchByPath(q)
+        val resources = model.searchByPath(q, page)
         set(resourcesName, resources)
       case None =>
         set(resourcesName, model.findAllByPaging(sqls"1 = 1", Fileinfo.PER_PAGE, (page - 1) * Fileinfo.PER_PAGE, sqls"${f.fullpath} asc"))
