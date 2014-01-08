@@ -167,8 +167,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     if (!EXTENSIONS.contains(file.extension.getOrElse("")))
       return None
 
-    val in = Resource.fromURL(file.toURL)
-    val bytes = in.bytes.take(READ_LIMIT).toArray
+    val bytes = file.bytes.take(READ_LIMIT).toArray
     val md5 = MessageDigest.getInstance("MD5")
     md5.reset()
     md5.update(bytes)
