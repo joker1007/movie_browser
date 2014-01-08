@@ -11,6 +11,7 @@ import scala.collection.mutable.ArrayBuffer
 import java.util.zip.{ZipInputStream}
 import java.io.{File => JFile, FileInputStream, FileOutputStream, BufferedOutputStream}
 import scala.util.control.Exception._
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
 
 object IsMovie {
   def unapply(f: Fileinfo): Option[Fileinfo] = {
@@ -101,10 +102,10 @@ case class Fileinfo(
 
   def createZipThumbnail(tempDir: Path, width: Int = 240, count:Int = 4): Either[Throwable,Path] = {
     val file = new JFile(fullpath)
-    val zis = new ZipInputStream(new FileInputStream(file))
+    val zis = new ZipArchiveInputStream(new FileInputStream(file), "Windows-31J")
     allCatch either {
       using(zis) {zs =>
-        val iter = Iterator.continually(zs.getNextEntry()).filterNot(_.isDirectory()).filter {e =>
+        val iter = Iterator.continually(zs.getNextZipEntry()).filterNot(_.isDirectory()).filter {e =>
           Fileinfo.IMAGE_EXTENSIONS.contains(Path(e.getName(), '/').extension.getOrElse(""))
         }.filterNot {e =>
           val name = e.getName()
