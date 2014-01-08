@@ -6,8 +6,13 @@ html(lang="ja")
     meta(charset="utf-8")
     =unescape(s.csrfMetaTags)
     script(type="text/javascript" src={uri("/assets/js/jquery-2.0.3.min.js")})
+    script(type="text/javascript" src={uri("/assets/js/components/jquery.lazyload/jquery.lazyload.min.js")})
     link(rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.1/css/bootstrap.min.css")
     link(rel="stylesheet" href="/assets/css/main.css")
+    :javascript
+      $(function() {
+        $("img.lazy").lazyload();
+      });
   body
     nav.navbar.navbar-inverse.navbar-static-top
       .navbar-header

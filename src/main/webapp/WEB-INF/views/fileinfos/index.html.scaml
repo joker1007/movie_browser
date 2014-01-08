@@ -17,7 +17,7 @@
       %td
         %a(href="file://#{fileinfo.fullpath}") #{fileinfo.fullpath}
         %br
-        %img(src={url(ThumbnailsController.showUrl, "hash" -> fileinfo.md5)})
+        %img.lazy(data-original={url(ThumbnailsController.showUrl, "hash" -> fileinfo.md5)})
       %td
         #{fileinfo.filesize}
         %br
