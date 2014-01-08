@@ -68,14 +68,14 @@ case class Fileinfo(
     this match {
       case IsMovie(f) =>
         createMovieThumbnail(tempDir, percentage, width, count) match {
-          case Left(throwable) => print("Error: "); println(throwable)
+          case Left(throwable) => print("Error: "); println(throwable); throwable.printStackTrace()
           case Right(merged) =>
             val data = merged.byteArray
             createThumbnailModel(data)
         }
       case IsZip(f) =>
         createZipThumbnail(tempDir, width, count) match {
-          case Left(throwable) => print("Error: "); println(throwable)
+          case Left(throwable) => print("Error: "); println(throwable); throwable.printStackTrace()
           case Right(merged) =>
             val data = merged.byteArray
             createThumbnailModel(data)
@@ -174,8 +174,12 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     val sum = md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
 
     val f = defaultAlias
-    if (findBy(sqls.eq(f.md5, sum)).isDefined)
-      return None
+    findBy(sqls.eq(f.md5, sum)) match {
+      case Some(fileinfo) =>
+        fileinfo.createThumbnail()
+        return None
+      case _ =>
+    }
 
     val fileinfoId = createWithAttributes(
       'md5 -> sum,
