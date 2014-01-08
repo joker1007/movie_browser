@@ -24,7 +24,7 @@ object SkinnyAppBuild extends Build {
     "org.skinny-framework" %% "skinny-test"        % skinnyVersion         % "test"
   )
   val containerDependencies = Seq(
-    "org.eclipse.jetty"  %  "jetty-webapp"       % jettyVersion          % "container",
+    "org.eclipse.jetty"  %  "jetty-webapp"       % jettyVersion          % "container;compile",
     "org.eclipse.jetty"  %  "jetty-plus"         % jettyVersion          % "container",
     "org.eclipse.jetty.orbit" % "javax.servlet"  % "3.0.0.v201112011016" % "container;provided;test"
   )
