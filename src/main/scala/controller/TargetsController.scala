@@ -35,12 +35,4 @@ object TargetsController extends SkinnyResource {
     "lastUpdatedAt" -> ParamType.DateTime
   )
 
-  def gather = params.getAs[Long]("id").map { id =>
-    Target.findById(id).map { target =>
-      FileGather.gather(Path(target.fullpath))
-      redirect(redirect(s"/${resourcesName}"))
-    } getOrElse haltWithBody(404)
-  } getOrElse haltWithBody(404)
-
-
 }

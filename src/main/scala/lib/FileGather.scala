@@ -3,28 +3,25 @@ package lib
 import scalax.file.Path
 import scalax.file.PathMatcher.{IsFile, IsDirectory}
 import model.Fileinfo
+import akka.actor.ActorRef
 
 object FileGather {
-  def gather(pathName: String) {
+  def gather(pathName: String, router: ActorRef) {
     val path = Path(pathName, '/')
-    gather(path)
+    gather(path, router)
   }
 
-  def gather(path: Path) {
+  def gather(path: Path, router: ActorRef) {
     val pathSet = path.children()
     pathSet.foreach {
       case IsDirectory(f) =>
-        gather(f)
+        gather(f, router)
       case IsFile(f) =>
-        process(f)
+        process(f, router: ActorRef)
     }
   }
 
-  def process(file: Path) {
-    val oid = Fileinfo.createFromFile(file)
-    oid match {
-      case Some(id) => println(s"Create: ${file.toString()}")
-      case None =>
-    }
+  def process(file: Path, router: ActorRef) {
+    router ! file
   }
 }
