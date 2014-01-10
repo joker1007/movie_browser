@@ -8,6 +8,7 @@
 -for (notice <- s.flash.notice)
   %p(class="alert alert-info") #{notice}
 
+.entry-info #{fileinfosCount} 件
 != paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
 
 %form#search-form.form-inline(action={url(FileinfosController.indexUrl)} method="get")
@@ -29,3 +30,4 @@
         %br
         #{fileinfo.md5}
 
+!= paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
