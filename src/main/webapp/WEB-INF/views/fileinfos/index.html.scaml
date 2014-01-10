@@ -1,8 +1,14 @@
 -@val s: skinny.Skinny
 -@val fileinfos: Seq[model.Fileinfo]
+-@val currentPage: Int
+-@val fileinfosCount: Long
+- implicit val req = request
+- import templates.PaginationHelper._
 
 -for (notice <- s.flash.notice)
   %p(class="alert alert-info") #{notice}
+
+!= paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
 
 %form#search-form.form-inline(action={url(FileinfosController.indexUrl)} method="get")
   .form-group

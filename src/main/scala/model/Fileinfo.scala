@@ -160,20 +160,20 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     updatedAt = rs.dateTimeOpt(rn.updatedAt)
   )
 
-  def createFromFile(file: Path): Option[Long] = {
+  def createFromFile(file: Path, force: Boolean = false): Option[Long] = {
     if (!file.canRead)
       return None
 
     if (!EXTENSIONS.contains(file.extension.getOrElse("")))
       return None
 
-    val bytes = file.bytes.take(READ_LIMIT).toArray
-    val md5 = MessageDigest.getInstance("MD5")
-    md5.reset()
-    md5.update(bytes)
-    val sum = md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
-
     val f = defaultAlias
+
+    if (isExistByFullpath(file.path) && !force)
+      return None
+
+    val sum = getMd5FromFile(file)
+
     findBy(sqls.eq(f.md5, sum)) match {
       case Some(fileinfo) =>
         fileinfo.createThumbnail()
@@ -193,7 +193,25 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     Some(fileinfoId)
   }
 
+  private[this] def getMd5FromFile(file: Path): String = {
+    val bytes = file.bytes.take(READ_LIMIT).toArray
+    val md5 = MessageDigest.getInstance("MD5")
+    md5.reset()
+    md5.update(bytes)
+    md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
+  }
+
+  def isExistByFullpath(fullpath: String): Boolean = {
+    val f = defaultAlias
+    countBy(sqls.eq(f.fullpath, fullpath)) > 0
+  }
+
   def searchByPath(pathString: String, page: Int = 1): List[Fileinfo] = {
     findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc")
+  }
+
+  def searchByPathWithTotalCount(pathString: String, page: Int = 1): (List[Fileinfo], Long) = {
+    val count = countBy(sqls.like(defaultAlias.fullpath, s"%$pathString%"))
+    (findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc"), count)
   }
 }
