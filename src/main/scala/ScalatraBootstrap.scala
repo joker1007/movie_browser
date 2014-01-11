@@ -7,13 +7,6 @@ import _root_.controller._
 
 class ScalatraBootstrap extends SkinnyLifeCycle {
 
-  object CustomAssetsController extends AssetsController with Routes {
-    addMimeMapping("text/css", "css")
-
-    get(s"${jsRootPath}/*")(js).as('js)
-    get(s"${cssRootPath}/*")(css).as('css)
-  }
-
   val actorSystem = ActorSystem()
   val gatherActor = actorSystem.actorOf(Props[FileGatherActor])
 
@@ -25,7 +18,7 @@ class ScalatraBootstrap extends SkinnyLifeCycle {
     TargetsController.mount(ctx)
     ThumbnailsController.mount(ctx)
     FileinfosController.mount(ctx)
-    CustomAssetsController.mount(ctx)
+    AssetsController.mount(ctx)
   }
 
 }
