@@ -8,7 +8,6 @@ object PaginationHelper {
   def paginate[A](baseUrl: Route, collection: Seq[A], currentPage: Int, totalCount: Int, perPage: Int)(implicit req: javax.servlet.http.HttpServletRequest) = {
     val lastPage = (totalCount / perPage) + 1
     val params = req.getParameterMap
-    println(params)
     val pairs = Map(params.keys.map {k => (k, params.get(k).head)}.toSeq: _*)
     <ul class="pagination">
       <li><a href={url(baseUrl, (pairs + ("page" -> "1")).toSeq: _*)}>&laquo;</a></li>
