@@ -12,6 +12,8 @@ import java.util.zip.{ZipInputStream}
 import java.io.{File => JFile, FileInputStream, FileOutputStream, BufferedOutputStream}
 import scala.util.control.Exception._
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
+import model.dmm.{Item, ApiClient}
+import org.slf4j.LoggerFactory
 
 object IsMovie {
   def unapply(f: Fileinfo): Option[Fileinfo] = {
@@ -51,6 +53,40 @@ case class Fileinfo(
   def isMovie(): Boolean = Fileinfo.MOVIE_EXTENSIONS.contains(extension)
   def isArchive(): Boolean = Fileinfo.ARCHIVE_EXTENSIONS.contains(extension)
   def extension: String = Path(fullpath, '/').extension.getOrElse("")
+
+  def normalizeBasename: String = {
+    Path(fullpath, '/').simpleName
+      .replaceAll("""\.(ogm|avi)""", "")
+      .replaceAll("""^\(.*\)( ?\[.*?\])? ?""", "") // Remove prefix
+      .replaceAll("""(\(.*?\)|\[.*?\]) *$""", "") // Remove suffix
+      .replaceAll(""" +- +""", " ")
+      .replaceAll("""・""", " ")
+      .trim
+  }
+
+  def fetchDMM(site: String = "DMM.co.jp"): Option[Item] = {
+    ApiClient.fetch(Map("site" -> site, "keyword" -> normalizeBasename)).headOption
+  }
+
+  def createMetadataFromDMM(site: String = "DMM.co.jp") {
+    fetchDMM(site) match {
+      case Some(item) =>
+        createMetadataWithAttributes(
+          'title -> item.title,
+          'url -> item.url,
+          'imageUrl -> item.imageUrl,
+          'largeImageUrl -> item.largeImageUrl
+        )
+      case None =>
+        val logger = LoggerFactory.getLogger(getClass())
+        logger.info(s"Not found item information for '$normalizeBasename'")
+    }
+  }
+
+  def createMetadataWithAttributes(attributes: (Symbol, Any)*) {
+    val attributesWithMd5 = attributes.+:('md5, md5)
+    FileMetadata.createWithAttributes(attributesWithMd5: _*)
+  }
 
   def createThumbnail(percentage: Int = 10, width: Int = 240, count:Int = 4, force: Boolean = false) {
     val t = Thumbnail.defaultAlias

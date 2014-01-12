@@ -1,0 +1,1 @@
+create table file_metadatas(  id bigserial not null primary key,  md5 varchar(128) not null,  title varchar(512) not null,  url varchar(512),  image_url varchar(512),  large_image_url varchar(512),  created_at timestamp not null,  updated_at timestamp)
