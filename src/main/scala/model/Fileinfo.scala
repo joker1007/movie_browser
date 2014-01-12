@@ -273,8 +273,10 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     (findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc"), count)
   }
 
+  def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax)
+
   def joinAllByPaging(page: Int = 1, searchWord: Option[String] = None): List[Fileinfo] = {
-    val (f, fm, mii, ii) = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax)
+    val (f, fm, mii, ii) = joinTableSyntaxes
     DB.readOnly {implicit session =>
       select.from(Fileinfo as f)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
@@ -293,7 +295,16 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   }
 
   def joinAllByPagingWithTotalCount(page: Int = 1, searchWord: Option[String] = None): (List[Fileinfo], Long) = {
-    val count = Fileinfo.countAll()
-    (joinAllByPaging(page, searchWord), count)
+    val (f, fm, mii, ii) = joinTableSyntaxes
+    val fileinfoCount = DB.readOnly {implicit session =>
+      select(sqls.count(sqls.distinct(f.id))).from(Fileinfo as f)
+        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
+        .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
+        .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
+        .where(sqls.toAndConditionOpt(searchWord.map(sqls.like(ii.name, _))))
+        .toSQL
+        .map(_.int(1)).single.apply().get
+    }
+    (joinAllByPaging(page, searchWord), fileinfoCount)
   }
 }

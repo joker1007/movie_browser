@@ -14,19 +14,16 @@ object FileinfosController extends SkinnyResource {
 
   override def showResources()(implicit format: Format = Format.HTML): Any = withFormat(format) {
     val query = params.getAs[String]("q")
+    set("query", query)
+
     val page = params.getAs[Int]("page") getOrElse 1
     set("currentPage", page)
+
     val f = Fileinfo.defaultAlias
-    query match {
-      case Some(q) =>
-        val (resources, count) = model.searchByPathWithTotalCount(q, page)
-        set(resourcesName, resources)
-        set("fileinfosCount", count)
-      case None =>
-        val count = Fileinfo.countAll()
-        set(resourcesName, model.findAllByPaging(sqls"1 = 1", Fileinfo.PER_PAGE, (page - 1) * Fileinfo.PER_PAGE, sqls"${f.fullpath} asc"))
-        set("fileinfosCount", count)
-    }
+    val (resources, count) = model.joinAllByPagingWithTotalCount(page = page, searchWord = query)
+    set(resourcesName, resources)
+    set("fileinfosCount", count)
+
     render(s"/${resourcesName}/index")
   }
 

@@ -14,7 +14,38 @@ case class FileMetadata(
   createdAt: DateTime,
   updatedAt: Option[DateTime] = None,
   itemInfos: Seq[ItemInfo] = Nil
-)
+) {
+  def actors: Seq[String] = {
+    for {
+      info <- itemInfos
+      if info.kind == "actress" || info.kind == "actor"
+      if !(info.dmmId contains "_ruby")
+      if info.name != "av"
+    } yield info.name
+  }
+
+  def keywords: Seq[String] = {
+    for {
+      info <- itemInfos
+      if (info.kind == "keyword")
+    } yield info.name
+  }
+
+  def maker: Option[String] = {
+    (for {
+      info <- itemInfos
+      if (info.kind == "maker")
+    } yield info.name).headOption
+  }
+
+  def label: Option[String] = {
+    (for {
+      info <- itemInfos
+      if (info.kind == "label")
+    } yield info.name).headOption
+  }
+
+}
 
 object FileMetadata extends SkinnyCRUDMapper[FileMetadata] with TimestampsFeature[FileMetadata] {
   override val tableName = "file_metadatas"

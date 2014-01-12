@@ -1,5 +1,6 @@
 -@val s: skinny.Skinny
 -@val fileinfos: Seq[model.Fileinfo]
+-@val query: Option[String]
 -@val currentPage: Int
 -@val fileinfosCount: Long
 - implicit val req = request
@@ -13,7 +14,7 @@
 
 %form#search-form.form-inline(action={url(FileinfosController.indexUrl)} method="get")
   .form-group
-    %input.form-control(type="text" name="q" placeholder="Search Word")
+    %input.form-control(type="text" name="q" placeholder="Search Word" value={query.getOrElse("")})
   %input.btn.btn-primary(type="submit" value="Search")
 
 %table(class="table table-bordered")
@@ -25,7 +26,23 @@
         %a(href="file://#{fileinfo.fullpath}") #{fileinfo.fullpath}
         %br
         %img.lazy(data-original={url(ThumbnailsController.showUrl, "hash" -> fileinfo.md5)})
-      %td
+      %td.metadata
+        - for (metadata <- fileinfo.fileMetadata)
+          .actors
+            出演者:
+            - for (actor <- metadata.actors)
+              %a(href={url(FileinfosController.indexUrl, "q" -> actor)})= actor
+          .maker
+            メーカー:
+            - for (maker <- metadata.maker)
+              %a(href={url(FileinfosController.indexUrl, "q" -> maker)})= maker
+          .url
+            - for (url <- metadata.url)
+              %a(href={url} target="_blank") Link
+          .keywords
+            - for (keyword <- metadata.keywords)
+              %a(href={url(FileinfosController.indexUrl, "q" -> keyword)})= keyword
+          %br
         #{fileinfo.filesize}
         %br
         #{fileinfo.md5}
