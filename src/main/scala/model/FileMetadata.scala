@@ -12,13 +12,15 @@ case class FileMetadata(
   imageUrl: Option[String] = None,
   largeImageUrl: Option[String] = None,
   createdAt: DateTime,
-  updatedAt: Option[DateTime] = None
+  updatedAt: Option[DateTime] = None,
+  itemInfos: Seq[ItemInfo] = Nil
 )
 
 object FileMetadata extends SkinnyCRUDMapper[FileMetadata] with TimestampsFeature[FileMetadata] {
-
+  override val tableName = "file_metadatas"
   override val defaultAlias = createAlias("fm")
-  override def tableName = "file_metadatas"
+
+  val infos = hasManyThrough[ItemInfo](MetadataItemInfo, ItemInfo, (fm, iis) => fm.copy(itemInfos = iis)).byDefault
 
   override def extract(rs: WrappedResultSet, rn: ResultName[FileMetadata]): FileMetadata = new FileMetadata(
     id = rs.long(rn.id),

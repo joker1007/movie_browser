@@ -44,12 +44,12 @@ class TargetsControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport with
   }
 
   it should "create a target" in {
-    post(s"/targets", "fullpath" -> "dummy","lastUpdatedAt" -> new DateTime().toString()) {
+    post(s"/targets", "fullpath" -> "dummy") {
       status should equal(403)
     }
 
     withSession("csrf-token" -> "12345") {
-      post(s"/targets", "fullpath" -> "dummy","lastUpdatedAt" -> new DateTime().toString(), "csrf-token" -> "12345") {
+      post(s"/targets", "fullpath" -> "/tmp", "csrf-token" -> "12345") {
         status should equal(302)
         val id = header("Location").split("/").last.toLong
         Target.findById(id).isDefined should equal(true)
@@ -64,13 +64,13 @@ class TargetsControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport with
   }
 
   it should "update a target" in {
-    put(s"/targets/${target.id}", "fullpath" -> "dummy","lastUpdatedAt" -> new DateTime().toString()) {
+    put(s"/targets/${target.id}", "fullpath" -> "dummy") {
       status should equal(403)
     }
 
     withSession("csrf-token" -> "12345") {
-      put(s"/targets/${target.id}", "fullpath" -> "dummy","lastUpdatedAt" -> new DateTime().toString(), "csrf-token" -> "12345") {
-        status should equal(200)
+      put(s"/targets/${target.id}", "fullpath" -> "dummy", "csrf-token" -> "12345") {
+        status should equal(302)
       }
     }
   }

@@ -3,17 +3,17 @@ package model.dmm
 import scala.xml.Node
 import scala.collection.mutable.ListBuffer
 
-case class ItemInfo(infoType: String, id: String, name: String)
+case class DmmItemInfo(infoType: String, id: String, name: String)
 
-object ItemInfo {
-  def fromXMLNode(node: Node): Option[ItemInfo] = {
+object DmmItemInfo {
+  def fromXMLNode(node: Node): Option[DmmItemInfo] = {
     for {
       (id, name) <- parse(node)
-    } yield ItemInfo(node.label, id, name)
+    } yield DmmItemInfo(node.label, id, name)
   }
 
-  def fromXMLNodeToCollection(node: Node): List[ItemInfo] = {
-    val buf: ListBuffer[ItemInfo] = ListBuffer()
+  def fromXMLNodeToCollection(node: Node): List[DmmItemInfo] = {
+    val buf: ListBuffer[DmmItemInfo] = ListBuffer()
     node.child foreach {c =>
       fromXMLNode(c) match {
         case Some(itemInfo) => buf += itemInfo

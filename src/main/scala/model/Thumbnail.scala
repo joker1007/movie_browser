@@ -15,7 +15,7 @@ case class Thumbnail(
 
 object Thumbnail extends SkinnyCRUDMapper[Thumbnail] with TimestampsFeature[Thumbnail] {
   override val tableName = "thumbnails"
-  override val defaultAlias = createAlias("t")
+  override val defaultAlias = createAlias("th")
 
   override def extract(rs: WrappedResultSet, rn: ResultName[Thumbnail]): Thumbnail = {
     val b = rs.blob(rn.data)

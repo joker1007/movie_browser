@@ -12,7 +12,7 @@ import java.util.zip.{ZipInputStream}
 import java.io.{File => JFile, FileInputStream, FileOutputStream, BufferedOutputStream}
 import scala.util.control.Exception._
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
-import model.dmm.{Item, ApiClient}
+import model.dmm.{DmmItemInfo, DmmItem, ApiClient}
 import org.slf4j.LoggerFactory
 
 object IsMovie {
@@ -48,7 +48,8 @@ case class Fileinfo(
   fullpath: String,
   filesize: Long,
   createdAt: DateTime,
-  updatedAt: Option[DateTime] = None
+  updatedAt: Option[DateTime] = None,
+  fileMetadata: Option[FileMetadata] = None
 ) {
   def isMovie(): Boolean = Fileinfo.MOVIE_EXTENSIONS.contains(extension)
   def isArchive(): Boolean = Fileinfo.ARCHIVE_EXTENSIONS.contains(extension)
@@ -57,35 +58,56 @@ case class Fileinfo(
   def normalizeBasename: String = {
     Path(fullpath, '/').simpleName
       .replaceAll("""\.(ogm|avi)""", "")
-      .replaceAll("""^\(.*\)( ?\[.*?\])? ?""", "") // Remove prefix
+      .replaceAll("""^\(.*?\)( ?\[.*?\])? ?""", "") // Remove prefix
       .replaceAll("""(\(.*?\)|\[.*?\]) *$""", "") // Remove suffix
       .replaceAll(""" +- +""", " ")
       .replaceAll("""・""", " ")
       .trim
   }
 
-  def fetchDMM(site: String = "DMM.co.jp"): Option[Item] = {
+  def fetchDMM(site: String = "DMM.co.jp"): Option[DmmItem] = {
     ApiClient.fetch(Map("site" -> site, "keyword" -> normalizeBasename)).headOption
   }
 
   def createMetadataFromDMM(site: String = "DMM.co.jp") {
     fetchDMM(site) match {
       case Some(item) =>
-        createMetadataWithAttributes(
-          'title -> item.title,
-          'url -> item.url,
-          'imageUrl -> item.imageUrl,
-          'largeImageUrl -> item.largeImageUrl
-        )
+        val fm = FileMetadata.defaultAlias
+        val fileMetadataId = FileMetadata.findBy(sqls"${fm.md5} = $md5") match {
+          case Some(fileMetadata) => fileMetadata.id
+          case None => createMetadataWithAttributes(
+            'title -> item.title,
+            'url -> item.url,
+            'imageUrl -> item.imageUrl,
+            'largeImageUrl -> item.largeImageUrl
+          )
+        }
+
+        item.itemInfo foreach (createTagWithItemInfo(_, fileMetadataId))
       case None =>
         val logger = LoggerFactory.getLogger(getClass())
         logger.info(s"Not found item information for '$normalizeBasename'")
     }
   }
 
-  def createMetadataWithAttributes(attributes: (Symbol, Any)*) {
+  def createMetadataWithAttributes(attributes: (Symbol, Any)*): Long = {
     val attributesWithMd5 = attributes.+:('md5, md5)
     FileMetadata.createWithAttributes(attributesWithMd5: _*)
+  }
+
+  def createTagWithItemInfo(info: DmmItemInfo, fileMetadataId: Long) {
+    val ii = ItemInfo.defaultAlias
+    try {
+      ItemInfo.findBy(sqls.eq(ii.dmmId, info.id)) match {
+        case Some(itemInfo) =>
+          MetadataItemInfo.createWithAttributes('fileMetadataId -> fileMetadataId, 'itemInfoId -> itemInfo.id)
+        case None =>
+          val itemInfoId = ItemInfo.createWithAttributes('dmmId -> info.id, 'kind -> info.infoType, 'name -> info.name)
+          MetadataItemInfo.createWithAttributes('fileMetadataId -> fileMetadataId, 'itemInfoId -> itemInfoId)
+      }
+    } catch {
+      case e: org.h2.jdbc.JdbcSQLException =>
+    }
   }
 
   def createThumbnail(percentage: Int = 10, width: Int = 240, count:Int = 4, force: Boolean = false) {
@@ -249,5 +271,28 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   def searchByPathWithTotalCount(pathString: String, page: Int = 1): (List[Fileinfo], Long) = {
     val count = countBy(sqls.like(defaultAlias.fullpath, s"%$pathString%"))
     (findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc"), count)
+  }
+
+  def joinAllByPaging(page: Int = 1): List[Fileinfo] = {
+    val (f, fm, mii, ii) = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax)
+    DB.readOnly {implicit session =>
+      select.from(Fileinfo as f)
+        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
+        .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
+        .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
+        .limit(PER_PAGE).offset((page - 1) * PER_PAGE)
+        .toSQL
+        .one(Fileinfo(f))
+        .toManies(
+          rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
+          rs => None: Option[MetadataItemInfo],
+          rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
+        ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
+    }
+  }
+
+  def joinAllByPagingWithTotalCount(page: Int = 1): (List[Fileinfo], Long) = {
+    val count = Fileinfo.countAll()
+    (joinAllByPaging(page), count)
   }
 }

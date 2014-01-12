@@ -78,7 +78,7 @@ class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport wi
 
     withSession("csrf-token" -> "12345") {
       put(s"/fileinfos/${fileinfo.id}", "md5" -> "dummy","fullpath" -> "dummy","filesize" -> "1234", "csrf-token" -> "12345") {
-        status should equal(200)
+        status should equal(302)
       }
     }
   }

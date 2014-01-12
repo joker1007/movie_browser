@@ -21,19 +21,19 @@ object ApiClient {
     DateTime.now().toString("yyyy-MM-dd HH:mm:ss")
   }
 
-  def fetch(query: Map[String, String]): List[Item] = {
+  def fetch(query: Map[String, String]): List[DmmItem] = {
     val res = Resource.fromURL(requestUrl(query)).string(Codec("EUC_JP"))
     val nodes = XML.loadString(res)
     val items = nodes \\ "item" map {node =>
       val itemInfoNode = (node \\ "iteminfo").head
-      val itemInfos = ItemInfo.fromXMLNodeToCollection(itemInfoNode)
+      val itemInfos = DmmItemInfo.fromXMLNodeToCollection(itemInfoNode)
       val contentId = (node \\ "content_id").head
       val title = (node \\ "title").head
       val url = (node \\ "URL").head
       val imageUrl = (node \\ "imageURL" \\ "list").headOption
       val largeImageUrl = (node \\ "imageURL" \\ "large").headOption
       val sampleImageUrls = (node \\ "sampleImageURL" \\ "sample_s" \\ "image").toList
-      Item(contentId.text, title.text, url.text, imageUrl.map(_.text), largeImageUrl.map(_.text), itemInfos, sampleImageUrls.map(_.text))
+      DmmItem(contentId.text, title.text, url.text, imageUrl.map(_.text), largeImageUrl.map(_.text), itemInfos, sampleImageUrls.map(_.text))
     }
     items.toList
   }
