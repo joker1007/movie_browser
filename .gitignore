@@ -33,6 +33,7 @@ syntax: glob
 # building
 target
 build
+standalone-build
 null
 dist
 test-output

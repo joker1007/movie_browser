@@ -86,6 +86,4 @@ object FileinfosController extends SkinnyResource {
   val rootUrl = get("/")(showResources).as('root)
   val downloadUrl = get(s"/${resourcesName}/download/:id")(download).as('download)
   val encodeUrl = get(s"/${resourcesName}/encode/:id")(encode).as('encode)
-
-  override val indexUrl = get(s"${resourcesBasePath}")(showResources()).as('index)
 }
