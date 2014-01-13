@@ -4,11 +4,9 @@ import skinny.orm._, feature._
 import scalikejdbc._, SQLInterpolation._
 import org.joda.time._
 import scalax.file.Path
-import scalax.io.Resource
 import java.security.MessageDigest
 import scala.sys.process._
 import scala.collection.mutable.ArrayBuffer
-import java.util.zip.{ZipInputStream}
 import java.io.{File => JFile, FileInputStream, FileOutputStream, BufferedOutputStream}
 import scala.util.control.Exception._
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream
@@ -55,17 +53,20 @@ case class Fileinfo(
   def isArchive(): Boolean = Fileinfo.ARCHIVE_EXTENSIONS.contains(extension)
   def extension: String = Path(fullpath, '/').extension.getOrElse("")
 
-  def normalizeBasename: String = {
+  lazy val normalizeBasename: String = {
     Path(fullpath, '/').simpleName
       .replaceAll("""\.(ogm|avi)""", "")
       .replaceAll("""^\(.*?\)( ?\[.*?\])? ?""", "") // Remove prefix
       .replaceAll("""(\(.*?\)|\[.*?\]) *$""", "") // Remove suffix
       .replaceAll(""" +- +""", " ")
       .replaceAll("""・""", " ")
+      .replaceAll(""" \d ?of ?\d""", "")
       .trim
   }
 
   def fetchDMM(site: String = "DMM.co.jp"): Option[DmmItem] = {
+    if (normalizeBasename.isEmpty)
+      return None
     ApiClient.fetch(Map("site" -> site, "keyword" -> normalizeBasename)).headOption
   }
 
@@ -272,6 +273,15 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   }
 
   def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax)
+
+  def noMetadata: List[Fileinfo] = {
+    val (f, fm, _, _) = joinTableSyntaxes
+    DB.readOnly {implicit session =>
+      select.from(Fileinfo as f)
+        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
+        .where.isNull(fm.id).toSQL.map(Fileinfo(f)).list().apply()
+    }
+  }
 
   def joinAllByPaging(page: Int = 1): List[Fileinfo] = {
     val (f, fm, mii, ii) = joinTableSyntaxes

@@ -9,6 +9,9 @@
 -for (notice <- s.flash.notice)
   %p(class="alert alert-info") #{notice}
 
+%form#fetching-form.form-inline(action="/fetching" method="post")
+  %input.btn.btn-primary(type="submit" value="Fetch Metadata")
+
 .entry-info #{fileinfosCount} 件
 != paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
 
