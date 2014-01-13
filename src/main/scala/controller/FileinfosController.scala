@@ -2,8 +2,11 @@ package controller
 
 import skinny._
 import skinny.validator._
-import model.Fileinfo
+import model.{MovieEncoder, Fileinfo}
 import scalikejdbc._, SQLInterpolation._
+import java.io.FileInputStream
+import java.net.URLEncoder
+import scala.collection.JavaConversions._
 
 object FileinfosController extends SkinnyResource {
   protectFromForgery()
@@ -11,6 +14,10 @@ object FileinfosController extends SkinnyResource {
   override def model = Fileinfo
   override def resourcesName = "fileinfos"
   override def resourceName = "fileinfo"
+
+  addMimeMapping("video/mp4", "mp4")
+  addMimeMapping("video/webm", "webm")
+  addMimeMapping("application/octet-stream", "avi")
 
   override def showResources()(implicit format: Format = Format.HTML): Any = withFormat(format) {
     val query = params.getAs[String]("q")
@@ -53,7 +60,32 @@ object FileinfosController extends SkinnyResource {
     "filesize" -> ParamType.Long
   )
 
+  def download = params.getAs[Long]("id").map {id =>
+    Fileinfo.findById(id).map {fi =>
+      val file = new java.io.File(fi.fullpath)
+      if (file.toPath.getFileName.toString.endsWith("mp4"))
+        contentType = "video/mp4"
+      else
+        contentType = "application/octet-stream"
+      response.addHeader("Content-Disposition", "attachment; filename*=UTF-8''" + URLEncoder.encode(file.toPath.getFileName.toString, "UTF-8"))
+
+      new FileInputStream(file)
+    }.getOrElse(haltWithBody(404))
+  }.getOrElse(haltWithBody(404))
+
+  def encode = params.getAs[Long]("id").map {id =>
+    Fileinfo.findById(id).map {fi =>
+      val file = new MovieEncoder(fi).encode()
+
+      withFormat(Format.JSON) {
+      s"""{"url" : "/videos/${fi.md5}.mp4"}"""
+      }
+    }.getOrElse(haltWithBody(404))
+  }.getOrElse(haltWithBody(404))
+
   val rootUrl = get("/")(showResources).as('root)
+  val downloadUrl = get(s"/${resourcesName}/download/:id")(download).as('download)
+  val encodeUrl = get(s"/${resourcesName}/encode/:id")(encode).as('encode)
 
   override val indexUrl = get(s"${resourcesBasePath}")(showResources()).as('index)
 }

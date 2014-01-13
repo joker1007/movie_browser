@@ -55,3 +55,4 @@ derby.log
 .lib
 logs
 
+src/main/webapp/videos/*
