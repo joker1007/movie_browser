@@ -123,22 +123,21 @@ case class Fileinfo(
       case None =>
     }
 
+    def __createThumbnailModel(result: Either[Throwable, Path]) {
+      result match {
+        case Left(throwable) => print("Error: "); println(throwable); throwable.printStackTrace()
+        case Right(merged) =>
+          val data = merged.byteArray
+          createThumbnailModel(data)
+      }
+    }
+
     val tempDir = Path.createTempDirectory()
     this match {
       case IsMovie(f) =>
-        createMovieThumbnail(tempDir, percentage, width, count) match {
-          case Left(throwable) => print("Error: "); println(throwable); throwable.printStackTrace()
-          case Right(merged) =>
-            val data = merged.byteArray
-            createThumbnailModel(data)
-        }
+        __createThumbnailModel(createMovieThumbnail(tempDir, percentage, width, count))
       case IsZip(f) =>
-        createZipThumbnail(tempDir, width, count) match {
-          case Left(throwable) => print("Error: "); println(throwable); throwable.printStackTrace()
-          case Right(merged) =>
-            val data = merged.byteArray
-            createThumbnailModel(data)
-        }
+        __createThumbnailModel(createZipThumbnail(tempDir, width, count))
       case _ =>
     }
   }
@@ -166,9 +165,8 @@ case class Fileinfo(
         val iter = Iterator.continually(zs.getNextZipEntry()).filterNot(_.isDirectory()).filter {e =>
           Fileinfo.IMAGE_EXTENSIONS.contains(Path(e.getName(), '/').extension.getOrElse(""))
         }.filterNot {e =>
-          val name = e.getName()
           val invalidPattern = """((^\.)|(__MACOSX)|(DS_Store))""".r
-          invalidPattern.findFirstIn(name).isDefined
+          invalidPattern.findFirstIn(e.getName()).isDefined
         }.take(count).zipWithIndex
 
         val convertCmd: ArrayBuffer[String] = ArrayBuffer("convert", "+append")

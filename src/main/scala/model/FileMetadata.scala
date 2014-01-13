@@ -25,26 +25,30 @@ case class FileMetadata(
   }
 
   def keywords: Seq[String] = {
-    for {
-      info <- itemInfos
-      if (info.kind == "keyword")
-    } yield info.name
+    listDataInfo("keyword")
   }
 
   def maker: Option[String] = {
-    (for {
-      info <- itemInfos
-      if (info.kind == "maker")
-    } yield info.name).headOption
+    singleDataInfo("maker")
   }
 
   def label: Option[String] = {
+    singleDataInfo("label")
+  }
+
+  private[this] def singleDataInfo(kind: String): Option[String] = {
     (for {
       info <- itemInfos
-      if (info.kind == "label")
+      if info.kind == kind
     } yield info.name).headOption
   }
 
+  private[this] def listDataInfo(kind: String): Seq[String] = {
+    for {
+      info <- itemInfos
+      if info.kind == kind
+    } yield info.name
+  }
 }
 
 object FileMetadata extends SkinnyCRUDMapper[FileMetadata] with TimestampsFeature[FileMetadata] {
