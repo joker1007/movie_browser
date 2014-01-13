@@ -21,6 +21,9 @@ class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
     MovieEncoder.cache.get(fileinfo.id).getOrElse {
       val o = encodeOptions
       val tmpFile = MovieEncoder.workDir / s"${fileinfo.md5}.${o("format")}"
+      if (tmpFile.exists)
+        return tmpFile
+
       val encodeCmd = Seq(
         "ffmpeg", "-y", "-i", fileinfo.fullpath, "-f", o("format"), "-vf", "scale=640:-1",
         "-vcodec", o("vcodec"), "-b:v", o("videoBitrate"),
