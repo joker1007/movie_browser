@@ -53,5 +53,7 @@
         #{fileinfo.md5}
         %br
         %a(href="/fileinfos/download/#{fileinfo.id.toString}") Download
+        %br
+        %a(href={url(FileinfosController.showUrl, "id" -> fileinfo.id.toString)}) View
 
 != paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)

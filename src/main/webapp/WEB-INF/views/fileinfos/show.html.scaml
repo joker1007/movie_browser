@@ -1,24 +1,10 @@
 -@val fileinfo: model.Fileinfo
 -@val s: skinny.Skinny
 
-%h3 #{s.i18n.get("fileinfo.detail")}
+%h3= fileinfo.fullpath
 %hr
 -for (notice <- s.flash.notice)
   %p(class="alert alert-info") #{notice}
-%table(class="table table-bordered")
-  %thead
-    %tr
-      %th #{s.i18n.get("fileinfo.id")}
-      %td #{fileinfo.id}
-    %tr
-      %th #{s.i18n.get("fileinfo.md5")}
-      %td #{fileinfo.md5}
-    %tr
-      %th #{s.i18n.get("fileinfo.fullpath")}
-      %td #{fileinfo.fullpath}
-    %tr
-      %th #{s.i18n.get("fileinfo.filesize")}
-      %td #{fileinfo.filesize}
 
 #video-area
 
