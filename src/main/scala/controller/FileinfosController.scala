@@ -76,9 +76,10 @@ object FileinfosController extends SkinnyResource {
   def encode = params.getAs[Long]("id").map {id =>
     Fileinfo.findById(id).map {fi =>
       val file = new MovieEncoder(fi).encode()
+      val relative = file.relativize(MovieEncoder.workDir)
 
       withFormat(Format.JSON) {
-      s"""{"url" : "/videos/${fi.md5}.mp4"}"""
+      s"""{"url" : "/videos/${relative.path}"}"""
       }
     }.getOrElse(haltWithBody(404))
   }.getOrElse(haltWithBody(404))
