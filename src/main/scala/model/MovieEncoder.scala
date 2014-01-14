@@ -51,6 +51,6 @@ class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
 }
 
 object MovieEncoder {
-  lazy val workDir = Path("/Users/joker/srcs/movie_browser/src/main/webapp/videos", '/')
+  lazy val workDir = Path(Option(System.getProperty("movie.output")).getOrElse("src/main/webapp/videos"))
   lazy val cache = mutable.Map[Long, Path]()
 }
