@@ -113,7 +113,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
 
   val PER_PAGE = 200
   val READ_LIMIT = 1024 * 1024 * 3 // 3MB
-  val MOVIE_EXTENSIONS = Array("mp4", "m4v", "mpg", "avi", "wmv", "ogm", "ogg", "asf")
+  val MOVIE_EXTENSIONS = Array("mp4", "m4v", "mpg", "avi", "wmv", "ogm", "ogg", "asf", "mkv", "mov", "flv")
   val ARCHIVE_EXTENSIONS = Array("zip", "rar")
   val IMAGE_EXTENSIONS = Array("jpg", "jpeg", "png")
   val EXTENSIONS = MOVIE_EXTENSIONS ++ ARCHIVE_EXTENSIONS

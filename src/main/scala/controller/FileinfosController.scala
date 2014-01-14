@@ -26,7 +26,6 @@ object FileinfosController extends SkinnyResource {
     val page = params.getAs[Int]("page") getOrElse 1
     set("currentPage", page)
 
-    val f = Fileinfo.defaultAlias
     val (resources, count) = model.joinAllByPagingWithTotalCount(page = page, searchWord = query)
     set(resourcesName, resources)
     set("fileinfosCount", count)
