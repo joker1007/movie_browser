@@ -195,13 +195,20 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
 
   def joinAllByPaging(page: Int = 1): List[Fileinfo] = {
     val (f, fm, mii, ii) = joinTableSyntaxes
-    val x = SubQuery.syntax("x").include(f)
+
+    val ids = DB.readOnly {implicit session =>
+      withSQL {
+        select(f.id).from(Fileinfo as f).orderBy(f.fullpath).limit(PER_PAGE).offset(PER_PAGE * (page - 1))
+      }.map(_.int(1)).list().apply()
+    }
+
     DB.readOnly {implicit session =>
-      select.all(x, fm, mii, ii).from(select.all(f).from(Fileinfo as f).limit(PER_PAGE).offset(PER_PAGE * (page - 1)).as(x))
-        .leftJoin(FileMetadata as fm).on(x(f).md5, fm.md5)
+      select.from(Fileinfo as f)
+        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
-        .orderBy(x(f).fullpath)
+        .where(sqls.in(f.id, ids))
+        .orderBy(f.fullpath)
         .toSQL
         .one(Fileinfo(f))
         .toManies(
@@ -215,6 +222,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   def searchJoinAllByPaging(page: Int = 1, searchWord: Option[String] = None): List[Fileinfo] = {
     if (searchWord.isEmpty)
       return joinAllByPaging(page)
+
     val (f, fm, mii, ii) = joinTableSyntaxes
     DB.readOnly {implicit session =>
       select.from(Fileinfo as f)
