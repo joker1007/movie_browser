@@ -32,7 +32,7 @@ class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
 
     val encodeCmd = Seq(
       "ffmpeg", "-y", "-i", fileinfo.fullpath, "-vprofile", "main",
-      "-vf", "scale=640:-1", "-vcodec", o("vcodec"), "-b:v", o("videoBitrate"),
+      "-vf", "scale=640:trunc(ow/a/2)*2", "-vcodec", o("vcodec"), "-b:v", o("videoBitrate"),
       "-qcomp", "0.6", "-qmin", "10", "-qmax", "51", "-qdiff", "4", "-i_qfactor", "0.71",
       "-acodec", o("acodec"), "-b:a", o("audioBitrate"), "-ar", o("audioSampleRate"),
       "-partitions", "+pi8x8+pi4x4+pp8x8+pb8x8", "-me_method", "hex", "-subq", "6", "-me_range", "16",
