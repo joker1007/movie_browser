@@ -2,7 +2,7 @@ package controller
 
 import skinny._
 import skinny.validator._
-import model.{MovieEncoder, Fileinfo}
+import model.{StandardMP4Encoder, MovieEncoder, HttpLiveStreamingEncoder, Fileinfo}
 import scalikejdbc._, SQLInterpolation._
 import java.io.FileInputStream
 import java.net.URLEncoder
@@ -74,8 +74,13 @@ object FileinfosController extends SkinnyResource {
 
   def encode = params.getAs[Long]("id").map {id =>
     Fileinfo.findById(id).map {fi =>
-      val file = new MovieEncoder(fi).encode()
-      val relative = file.relativize(MovieEncoder.workDir)
+      val userAgent = request.getHeader("User-Agent")
+      val encoder = """((Mobile/.+Safari)|Android)""".r findFirstIn userAgent match {
+        case Some(_) => new HttpLiveStreamingEncoder(fi)
+        case None => new StandardMP4Encoder(fi)
+      }
+      val output = encoder.encode()
+      val relative = output.relativize(MovieEncoder.workDir)
 
       withFormat(Format.JSON) {
       s"""{"url" : "/videos/${relative.path}"}"""

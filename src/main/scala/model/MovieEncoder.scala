@@ -2,10 +2,17 @@ package model
 
 import scala.sys.process._
 import scalax.file.Path
-import scala.collection.mutable
 
-class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
-  private[this] val defaultOptions = Map(
+trait MovieEncoder {
+  protected val defaultOptions: Map[String, String]
+  protected val overrideOptions: Map[String, String]
+  lazy val encodeOptions = defaultOptions ++ overrideOptions
+
+  def encode(): Path
+}
+
+class HttpLiveStreamingEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map(), force: Boolean = false) extends MovieEncoder {
+  protected val defaultOptions = Map(
     "format" -> "mp4",
     "vcodec" -> "libx264",
     "videoBitrate" -> "600k",
@@ -14,14 +21,13 @@ class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
     "audioSampleRate" -> "44100"
   )
 
-  lazy val encodeOptions = defaultOptions ++ options
-
+  protected val overrideOptions = options
 
   def encode(): Path = {
     val o = encodeOptions
     val segmentListName = s"${fileinfo.md5}.m3u8"
     val segmentListPath = MovieEncoder.workDir / segmentListName
-    if (segmentListPath.exists)
+    if (segmentListPath.exists && !force)
       return segmentListPath
 
     val streamFileDir = MovieEncoder.workDir / fileinfo.md5
@@ -44,6 +50,39 @@ class MovieEncoder(fileinfo: Fileinfo, options: Map[String, String] = Map()) {
     Process(encodeCmd, MovieEncoder.workDir.jfile).run
     Thread.sleep(5000)
     segmentListPath
+  }
+}
+
+class StandardMP4Encoder(fileinfo: Fileinfo, options: Map[String, String] = Map(), force: Boolean = false) extends MovieEncoder {
+  protected val defaultOptions = Map(
+    "format" -> "mp4",
+    "vcodec" -> "libx264",
+    "videoBitrate" -> "600k",
+    "acodec" -> "libfaac",
+    "audioBitrate" -> "128k",
+    "audioSampleRate" -> "44100"
+  )
+
+  protected val overrideOptions = options
+
+  def encode(): Path = {
+    val o = encodeOptions
+    val outputFileName = s"${fileinfo.md5}.mp4"
+    val outputFilePath = MovieEncoder.workDir / outputFileName
+    if (outputFilePath.exists && !force)
+      return outputFilePath
+
+    val encodeCmd = Seq(
+      "ffmpeg", "-y", "-i", fileinfo.fullpath, "-f", o("format"), "-vf", "scale=640:-1",
+      "-vcodec", o("vcodec"), "-b:v", o("videoBitrate"),
+      "-acodec", o("acodec"), "-b:a", o("audioBitrate"), "-ar", o("audioSampleRate"),
+      "-partitions", "all", "-me_method", "hex", "-subq", "6", "-me_range", "16",
+      "-g", "250", "-keyint_min", "25", "-sc_threshold", "40", "-b_strategy", "1", "-movflags", "frag_keyframe",
+      "-coder", "1", "-level", "30", "-async", "2", outputFileName
+    )
+    Process(encodeCmd, MovieEncoder.workDir.jfile).run
+    Thread.sleep(5000)
+    outputFilePath
   }
 }
 
