@@ -1,0 +1,26 @@
+{
+  "name": "imgLiquid",
+  "version": "0.9.944",
+  "main": "js/imgLiquid.js",
+  "dependencies": {
+    "jquery": ">=1.8.1"
+  },
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components",
+    "tests",
+    "examples"
+  ],
+  "homepage": "https://github.com/karacas/imgLiquid",
+  "_release": "0.9.944",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.9.944",
+    "commit": "8bdaca11228440f742aa327479ae203d9c4812bc"
+  },
+  "_source": "git://github.com/karacas/imgLiquid.git",
+  "_target": "~0.9.944",
+  "_originalSource": "imgLiquid",
+  "_direct": true
+}

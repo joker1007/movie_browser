@@ -2,13 +2,22 @@ package controller
 
 import skinny._
 import skinny.validator._
-import model.{StandardMP4Encoder, MovieEncoder, HttpLiveStreamingEncoder, Fileinfo}
+import model._
 import scalikejdbc._, SQLInterpolation._
 import java.io.FileInputStream
 import java.net.URLEncoder
 import scala.collection.JavaConversions._
+import akka.actor.ActorSystem
+import org.scalatra.{AsyncResult, FutureSupport}
+import scala.concurrent.{Await, Future, ExecutionContext}
+import scala.Some
+import skinny.validator.maxLength
+import org.slf4j.LoggerFactory
+import scalax.file.PathMatcher.IsFile
+import scalax.file.Path
+import scala.concurrent.duration._
 
-object FileinfosController extends SkinnyResource {
+class FileinfosController(system: ActorSystem) extends SkinnyResource with FutureSupport {
   protectFromForgery()
   override def scalateExtension = "scaml"
   override def model = Fileinfo
@@ -18,6 +27,10 @@ object FileinfosController extends SkinnyResource {
   addMimeMapping("video/mp4", "mp4")
   addMimeMapping("video/webm", "webm")
   addMimeMapping("application/octet-stream", "avi")
+  addMimeMapping("image/jpeg", "jpg")
+  addMimeMapping("image/png", "png")
+
+  protected implicit def executor: ExecutionContext = system.dispatcher
 
   override def showResources()(implicit format: Format = Format.HTML): Any = withFormat(format) {
     val query = params.getAs[String]("q")
@@ -31,6 +44,16 @@ object FileinfosController extends SkinnyResource {
     set("fileinfosCount", count)
 
     render(s"/${resourcesName}/index")
+  }
+
+  override def showResource(id: Long)(implicit format: Format = Format.HTML): Any = withFormat(format) {
+    val fileinfo = model.findModel(id).getOrElse(haltWithBody(404))
+    set(resourceName, fileinfo)
+    if (fileinfo.isArchive()) {
+      templateAttributes += "layout" -> "WEB-INF/layouts/simple.jade"
+      render(s"/${resourcesName}/archive_show")
+    } else
+      render(s"/${resourcesName}/show")
   }
 
   override def createForm = validation(createParams,
@@ -88,7 +111,32 @@ object FileinfosController extends SkinnyResource {
     }.getOrElse(haltWithBody(404))
   }.getOrElse(haltWithBody(404))
 
+  def extract = params.getAs[Long]("id").map {id =>
+    Fileinfo.findById(id).map {fileinfo =>
+      params.getAs[Int]("page").map {page =>
+        val ePath = new ArchiveExtractor(fileinfo).extract()
+        ePath match {
+          case Left(th) =>
+            LoggerFactory.getLogger(getClass).error("Extract Failed", th)
+            Array.emptyByteArray
+          case Right(path: Path) =>
+            contentType = "image/jpeg"
+            val children = path.children(IsFile).toArray
+            if (children.size < page)
+              haltWithBody(404)
+            val file = children.sortBy(_.path).apply(page - 1)
+            file.extension.map {
+              case "jpg" => contentType = "image/jpeg"
+              case "png" => contentType = "image/png"
+            }
+            file.byteArray
+        }
+      }.getOrElse(haltWithBody(404))
+    }.getOrElse(haltWithBody(404))
+  }.getOrElse(haltWithBody(404))
+
   val rootUrl = get("/")(showResources).as('root)
   val downloadUrl = get(s"/${resourcesName}/download/:id")(download).as('download)
   val encodeUrl = get(s"/${resourcesName}/encode/:id")(encode).as('encode)
+  val extractUrl = get(s"/${resourcesName}/extract/:id/:page")(extract).as('extract)
 }

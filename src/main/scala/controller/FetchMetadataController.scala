@@ -11,6 +11,6 @@ class FetchMetadataController(system: ActorSystem, actor: ActorRef) extends Skin
       actor ! (FetchMetadataCommand, fi)
     }
 
-    redirect(url(FileinfosController.indexUrl))
+    redirect(url(Controllers.fileinfos.indexUrl))
   }
 }

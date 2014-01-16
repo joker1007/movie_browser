@@ -14,18 +14,5 @@ html(lang="ja")
       $(function() {
         $("img.lazy").lazyload();
       });
-  body
-    nav.navbar.navbar-inverse.navbar-static-top
-      .navbar-header
-        a.navbar-brand(href={uri("/")}) Movie Browser
-      .collapse.navbar-collapse
-        ul.nav.navbar-nav
-          li
-            a(href={url(TargetsController.indexUrl)}) ディレクトリ登録
-    div#main.container
-      =unescape(body)
-      hr
-      a(href={uri("/")} class="btn btn-default") #{s.i18n.get("top")}
-    script(type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.0.1/js/bootstrap.min.js")
-    script(type="text/javascript" src={uri("/assets/js/skinny.js")})
-
+  body(class="archive-show")
+    = unescape(body)

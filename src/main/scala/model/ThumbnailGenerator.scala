@@ -63,7 +63,7 @@ class ThumbnailGenerator(fileinfo: Fileinfo) {
     val zis = new ZipArchiveInputStream(new FileInputStream(file), "Windows-31J")
     allCatch either {
       using(zis) {zs =>
-        val iter = Iterator.continually(zs.getNextZipEntry()).filterNot(_.isDirectory()).filter {e =>
+        val iter = Iterator.continually(zs.getNextZipEntry()).takeWhile(_ != null).filterNot(_.isDirectory()).filter {e =>
           Fileinfo.IMAGE_EXTENSIONS.contains(Path(e.getName(), '/').extension.getOrElse(""))
         }.filterNot {e =>
           val invalidPattern = """((^\.)|(__MACOSX)|(DS_Store))""".r

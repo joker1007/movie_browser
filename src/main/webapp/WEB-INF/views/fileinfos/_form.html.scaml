@@ -18,4 +18,4 @@
 %div(class="form-actions")
   =unescape(s.csrfHiddenInputTag)
   %input(type="submit" class="btn btn-primary" value={s.i18n.get("submit")})
-    %a(class="btn btn-default" href={url(FileinfosController.indexUrl)}) #{s.i18n.get("cancel")}
+    %a(class="btn btn-default" href={url(Controllers.fileinfos.indexUrl)}) #{s.i18n.get("cancel")}

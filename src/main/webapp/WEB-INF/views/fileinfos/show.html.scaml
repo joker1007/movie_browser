@@ -10,9 +10,9 @@
 
 %hr
 %div(class="form-actions")
-  %a(class="btn btn-default" href={url(FileinfosController.indexUrl)}) #{s.i18n.get("backToList")}
-  %a(href={url(FileinfosController.editUrl, "id" -> fileinfo.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
-  %a(data-method="delete" data-confirm={s.i18n.get("fileinfo.delete.confirm")} href={url(FileinfosController.deleteUrl, "id" -> fileinfo.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}
+  %a(class="btn btn-default" href={url(Controllers.fileinfos.indexUrl)}) #{s.i18n.get("backToList")}
+  %a(href={url(Controllers.fileinfos.editUrl, "id" -> fileinfo.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+  %a(data-method="delete" data-confirm={s.i18n.get("fileinfo.delete.confirm")} href={url(Controllers.fileinfos.deleteUrl, "id" -> fileinfo.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}
 
 :&javascript
   $.ajax("/fileinfos/encode/#{fileinfo.id.toString}", {

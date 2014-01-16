@@ -1,0 +1,26 @@
+-@val fileinfo: model.Fileinfo
+-@val s: skinny.Skinny
+
+.page-link-area
+  <a href="#" class="next-page page-link"> &lsaquo;Next</a><a href="#" class="prev-page page-link"> Prev&rsaquo;</a>
+#image-areas
+
+:&javascript
+  window.currentPage = 1;
+
+  function loadPage(page) {
+    $img = $("<img>").attr("src", "/fileinfos/extract/#{fileinfo.id.toString}/" + page);
+    $("#image-areas").html($img).imgLiquid({fill: false});
+  }
+
+  $(function() {
+    loadPage(window.currentPage)
+    $(".next-page").click(function() {
+      window.currentPage++;
+      loadPage(window.currentPage);
+    });
+    $(".prev-page").click(function() {
+      window.currentPage--;
+      loadPage(window.currentPage);
+    });
+  })

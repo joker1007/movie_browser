@@ -6,5 +6,5 @@
 -for (e <- s.errorMessages)
   %p(class="alert alert-danger") #{e}
 
-%form(method="post" action={url(FileinfosController.updateUrl, "id" -> s.params.id.get.toString)} class="form")
+%form(method="post" action={url(Controllers.fileinfos.updateUrl, "id" -> s.params.id.get.toString)} class="form")
   =include("_form.html.scaml")

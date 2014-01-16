@@ -57,3 +57,4 @@ derby.log
 logs
 
 src/main/webapp/videos/*
+src/main/webapp/extracted/*

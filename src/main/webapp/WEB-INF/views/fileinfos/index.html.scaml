@@ -13,9 +13,9 @@
   %input.btn.btn-primary(type="submit" value="Fetch Metadata")
 
 .entry-info #{fileinfosCount} 件
-!= paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
+!= paginate(Controllers.fileinfos.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
 
-%form#search-form.form-inline(action={url(FileinfosController.indexUrl)} method="get")
+%form#search-form.form-inline(action={url(Controllers.fileinfos.indexUrl)} method="get")
   .form-group
     %input.form-control(type="text" name="q" placeholder="Search Word" value={query.getOrElse("")})
   %input.btn.btn-primary(type="submit" value="Search")
@@ -36,17 +36,17 @@
           .actors
             出演者:
             - for (actor <- metadata.actors)
-              %a(href={url(FileinfosController.indexUrl, "q" -> actor)})= actor
+              %a(href={url(Controllers.fileinfos.indexUrl, "q" -> actor)})= actor
           .maker
             メーカー:
             - for (maker <- metadata.maker)
-              %a(href={url(FileinfosController.indexUrl, "q" -> maker)})= maker
+              %a(href={url(Controllers.fileinfos.indexUrl, "q" -> maker)})= maker
           .url
             - for (url <- metadata.url)
               %a(href={url} target="_blank") Link
           .keywords
             - for (keyword <- metadata.keywords)
-              %a(href={url(FileinfosController.indexUrl, "q" -> keyword)})= keyword
+              %a(href={url(Controllers.fileinfos.indexUrl, "q" -> keyword)})= keyword
           %br
         #{fileinfo.filesize}
         %br
@@ -54,6 +54,6 @@
         %br
         %a(href="/fileinfos/download/#{fileinfo.id.toString}") Download
         %br
-        %a(href={url(FileinfosController.showUrl, "id" -> fileinfo.id.toString)}) View
+        %a(href={url(Controllers.fileinfos.showUrl, "id" -> fileinfo.id.toString)}) View
 
-!= paginate(FileinfosController.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
+!= paginate(Controllers.fileinfos.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)
