@@ -8,14 +8,13 @@ import java.io.FileInputStream
 import java.net.URLEncoder
 import scala.collection.JavaConversions._
 import akka.actor.ActorSystem
-import org.scalatra.{AsyncResult, FutureSupport}
-import scala.concurrent.{Await, Future, ExecutionContext}
+import org.scalatra.{FutureSupport}
+import scala.concurrent.{ExecutionContext}
 import scala.Some
 import skinny.validator.maxLength
 import org.slf4j.LoggerFactory
 import scalax.file.PathMatcher.IsFile
 import scalax.file.Path
-import scala.concurrent.duration._
 
 class FileinfosController(system: ActorSystem) extends SkinnyResource with FutureSupport {
   protectFromForgery()
