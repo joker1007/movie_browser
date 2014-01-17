@@ -26,7 +26,7 @@
     %tr
       %td #{fileinfo.id}
       %td
-        %a(href="file://#{fileinfo.fullpath}")= fileinfo.fullpath
+        %a(href="file://#{fileinfo.fullpath}")= fileinfo.basename
         %br
         - for (metadata <- fileinfo.fileMetadata)
           %a(href="file://#{fileinfo.fullpath}")= metadata.title

@@ -40,6 +40,7 @@ case class Fileinfo(
   md5: String,
   fullpath: String,
   filesize: Long,
+  basename: String,
   createdAt: DateTime,
   updatedAt: Option[DateTime] = None,
   fileMetadata: Option[FileMetadata] = None
@@ -122,6 +123,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     id = rs.long(rn.id),
     md5 = rs.string(rn.md5),
     fullpath = rs.string(rn.fullpath),
+    basename = rs.string(rn.basename),
     filesize = rs.long(rn.filesize),
     createdAt = rs.dateTime(rn.createdAt),
     updatedAt = rs.dateTimeOpt(rn.updatedAt)
@@ -148,9 +150,11 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       case _ =>
     }
 
+    val jPath = java.nio.file.Paths.get(file.path)
     val fileinfoId = createWithAttributes(
       'md5 -> sum,
       'fullpath -> file.path,
+      'basename -> jPath.getFileName.toString,
       'filesize -> file.size
     )
 
@@ -198,7 +202,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
 
     val ids = DB.readOnly {implicit session =>
       withSQL {
-        select(f.id).from(Fileinfo as f).orderBy(f.fullpath).limit(PER_PAGE).offset(PER_PAGE * (page - 1))
+        select(f.id).from(Fileinfo as f).orderBy(f.basename).limit(PER_PAGE).offset(PER_PAGE * (page - 1))
       }.map(_.int(1)).list().apply()
     }
 
@@ -208,7 +212,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
         .where(sqls.in(f.id, ids))
-        .orderBy(f.fullpath)
+        .orderBy(f.basename)
         .toSQL
         .one(Fileinfo(f))
         .toManies(
@@ -230,7 +234,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
         .where(searchWord.map(w => sqls.like(f.fullpath, "%" + w + "%").or.eq(ii.name, w)))
-        .orderBy(f.fullpath)
+        .orderBy(f.basename)
         .toSQL
         .one(Fileinfo(f))
         .toManies(
@@ -254,5 +258,13 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
         .map(_.int(1)).single.apply().get
     }
     (searchJoinAllByPaging(page, searchWord), fileinfoCount)
+  }
+
+  // データ移行のための一時メソッド
+  def registBasename() {
+    Fileinfo.findAll().foreach {fi =>
+      val path = java.nio.file.Paths.get(fi.fullpath)
+      Fileinfo.updateById(fi.id).withAttributes('basename -> path.getFileName.toString)
+    }
   }
 }

@@ -1,0 +1,1 @@
+alter table fileinfos add column basename varchar(255) not null default ''
