@@ -11,6 +11,7 @@
     %tr
       %th #{s.i18n.get("target.id")}
       %th #{s.i18n.get("target.fullpath")}
+      %th #{s.i18n.get("target.asPath")}
       %th #{s.i18n.get("target.lastUpdatedAt")}
       %th
       %th
@@ -19,6 +20,7 @@
     %tr
       %td #{target.id}
       %td #{target.fullpath}
+      %td #{target.asPath}
       %td #{target.lastUpdatedAt}
       %td
         %form(action="/gathering" method="post")

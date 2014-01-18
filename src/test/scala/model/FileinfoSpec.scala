@@ -10,11 +10,21 @@ import skinny.DBSettings
 import scalax.file.Path
 
 class FileinfoSpec extends FunSpec with AutoRollback with DBSettings with ShouldMatchers {
-  def fileinfo = Fileinfo(1, "hash", "/tmp/sample.mp4", 1, DateTime.now(), None)
+  def fileinfo = Fileinfo(
+    id = 1,
+    md5 = "hash",
+    fullpath = "/tmp/sample.mp4",
+    relativePath = "sample.mp4",
+    filesize = 1,
+    basename = "sample.mp4",
+    createdAt = DateTime.now(),
+    updatedAt = None,
+    targetId = 1
+  )
   def testArchivePath = Fileinfo.getClass.getResource("/test_archive.zip")
 
   override def fixture(implicit session: DBSession) {
-    FactoryGirl(Fileinfo).create()
+    FactoryGirl(Fileinfo).create('md5 -> "hash1")
     val fm = FactoryGirl(FileMetadata).create()
     val itemInfo = FactoryGirl(ItemInfo).create()
     val itemInfo2 = FactoryGirl(ItemInfo).create('dmmId -> "dmmId2", 'name -> "keywordName2")
@@ -37,7 +47,7 @@ class FileinfoSpec extends FunSpec with AutoRollback with DBSettings with Should
     it("create Thumbnail record") {implicit session =>
       val archive = fileinfo.copy(fullpath = testArchivePath.getPath)
       val tempDir = Path.createTempDirectory()
-      archive.createZipThumbnail(tempDir)
+      new ThumbnailGenerator(archive).createZipThumbnail(tempDir)
     }
   }
 

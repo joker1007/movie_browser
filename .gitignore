@@ -58,3 +58,4 @@ logs
 
 src/main/webapp/videos/*
 src/main/webapp/extracted/*
+task/src/main/resources

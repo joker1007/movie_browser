@@ -15,23 +15,27 @@ object TargetsController extends SkinnyResource {
 
   override def createForm = validation(createParams,
     paramKey("fullpath") is required & maxLength(512),
+    paramKey("asPath") is maxLength(512),
     paramKey("lastUpdatedAt") is dateTimeFormat
   )
   override def createParams = Params(params)
     .withDateTime("lastUpdatedAt")
   override def createFormStrongParameters = Seq(
     "fullpath" -> ParamType.String,
+    "asPath" -> ParamType.String,
     "lastUpdatedAt" -> ParamType.DateTime
   )
 
   override def updateForm = validation(updateParams,
     paramKey("fullpath") is required & maxLength(512),
+    paramKey("asPath") is maxLength(512),
     paramKey("lastUpdatedAt") is dateTimeFormat
   )
   override def updateParams = Params(params)
     .withDateTime("lastUpdatedAt")
   override def updateFormStrongParameters = Seq(
     "fullpath" -> ParamType.String,
+    "asPath" -> ParamType.String,
     "lastUpdatedAt" -> ParamType.DateTime
   )
 

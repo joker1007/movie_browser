@@ -39,15 +39,22 @@ case class Fileinfo(
   id: Long,
   md5: String,
   fullpath: String,
+  relativePath: String,
   filesize: Long,
   basename: String,
   createdAt: DateTime,
   updatedAt: Option[DateTime] = None,
-  fileMetadata: Option[FileMetadata] = None
+  fileMetadata: Option[FileMetadata] = None,
+  targetId: Long,
+  target: Option[Target] = None
 ) {
   def isMovie(): Boolean = Fileinfo.MOVIE_EXTENSIONS.contains(extension)
   def isArchive(): Boolean = Fileinfo.ARCHIVE_EXTENSIONS.contains(extension)
   def extension: String = Path(fullpath, '/').extension.getOrElse("")
+  def asPath: String = (for {
+    t <- target
+    as <- t.asPathPresence
+  } yield as.replaceAll("/$", "") + "/" + relativePath).getOrElse(fullpath)
 
   lazy val normalizeBasename: String = {
     Path(fullpath, '/').simpleName
@@ -123,13 +130,15 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     id = rs.long(rn.id),
     md5 = rs.string(rn.md5),
     fullpath = rs.string(rn.fullpath),
+    relativePath = rs.string(rn.relativePath),
     basename = rs.string(rn.basename),
     filesize = rs.long(rn.filesize),
     createdAt = rs.dateTime(rn.createdAt),
-    updatedAt = rs.dateTimeOpt(rn.updatedAt)
+    updatedAt = rs.dateTimeOpt(rn.updatedAt),
+    targetId = rs.long(rn.targetId)
   )
 
-  def createFromFile(file: Path, force: Boolean = false): Option[Long] = {
+  def createFromFile(target: Target, file: Path, force: Boolean = false): Option[Long] = {
     if (!file.canRead)
       return None
 
@@ -137,6 +146,14 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       return None
 
     val f = defaultAlias
+
+    // migration
+    findBy(sqls.eq(f.fullpath, file.path)) match {
+      case Some(fileinfo) =>
+        val jPath = java.nio.file.Paths.get(fileinfo.fullpath)
+        Fileinfo.updateById(fileinfo.id).withAttributes('basename -> jPath.getFileName, 'targetId -> target.id, 'relativePath -> file.relativize(target.path).path)
+      case None =>
+    }
 
     if (isExistByFullpath(file.path) && !force)
       return None
@@ -155,6 +172,8 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       'md5 -> sum,
       'fullpath -> file.path,
       'basename -> jPath.getFileName.toString,
+      'targetId -> target.id,
+      'relativePath -> file.relativize(target.path).path,
       'filesize -> file.size
     )
 
@@ -186,10 +205,10 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     (findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc"), count)
   }
 
-  def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax)
+  def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax, Target.syntax)
 
   def noMetadata: List[Fileinfo] = {
-    val (f, fm, _, _) = joinTableSyntaxes
+    val (f, fm, _, _, _) = joinTableSyntaxes
     DB.readOnly {implicit session =>
       select.from(Fileinfo as f)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
@@ -198,23 +217,30 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   }
 
   def joinAllByPaging(page: Int = 1): List[Fileinfo] = {
-    val (f, fm, mii, ii) = joinTableSyntaxes
+    val (f, fm, mii, ii, t) = joinTableSyntaxes
 
     val ids = DB.readOnly {implicit session =>
       withSQL {
-        select(f.id).from(Fileinfo as f).orderBy(f.basename).limit(PER_PAGE).offset(PER_PAGE * (page - 1))
+        select(f.id).from(Fileinfo as f)
+          .innerJoin(Target as t).on(f.targetId, t.id)
+          .orderBy(f.basename)
+          .limit(PER_PAGE).offset(PER_PAGE * (page - 1))
       }.map(_.int(1)).list().apply()
     }
 
     DB.readOnly {implicit session =>
       select.from(Fileinfo as f)
+        .innerJoin(Target as t).on(f.targetId, t.id)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
         .where(sqls.in(f.id, ids))
         .orderBy(f.basename)
         .toSQL
-        .one(Fileinfo(f))
+        .one {rs =>
+          val target = Target(t)(rs)
+          Fileinfo(f)(rs).copy(target = Some(target))
+        }
         .toManies(
           rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
           rs => None: Option[MetadataItemInfo],
@@ -227,16 +253,20 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     if (searchWord.isEmpty)
       return joinAllByPaging(page)
 
-    val (f, fm, mii, ii) = joinTableSyntaxes
+    val (f, fm, mii, ii, t) = joinTableSyntaxes
     DB.readOnly {implicit session =>
       select.from(Fileinfo as f)
+        .innerJoin(Target as t).on(f.targetId, t.id)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
         .where(searchWord.map(w => sqls.like(f.fullpath, "%" + w + "%").or.eq(ii.name, w)))
         .orderBy(f.basename)
         .toSQL
-        .one(Fileinfo(f))
+        .one {rs =>
+          val target = Target(t)(rs)
+          Fileinfo(f)(rs).copy(target = Some(target))
+        }
         .toManies(
           rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
           rs => None: Option[MetadataItemInfo],
@@ -247,9 +277,10 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   }
 
   def joinAllByPagingWithTotalCount(page: Int = 1, searchWord: Option[String] = None): (List[Fileinfo], Long) = {
-    val (f, fm, mii, ii) = joinTableSyntaxes
+    val (f, fm, mii, ii, t) = joinTableSyntaxes
     val fileinfoCount = DB.readOnly {implicit session =>
       select(sqls.count(sqls.distinct(f.id))).from(Fileinfo as f)
+        .innerJoin(Target as t).on(f.targetId, t.id)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
@@ -260,11 +291,4 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     (searchJoinAllByPaging(page, searchWord), fileinfoCount)
   }
 
-  // データ移行のための一時メソッド
-  def registBasename() {
-    Fileinfo.findAll().foreach {fi =>
-      val path = java.nio.file.Paths.get(fi.fullpath)
-      Fileinfo.updateById(fi.id).withAttributes('basename -> path.getFileName.toString)
-    }
-  }
 }

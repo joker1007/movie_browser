@@ -1,0 +1,1 @@
+alter table targets add column as_path varchar(512)

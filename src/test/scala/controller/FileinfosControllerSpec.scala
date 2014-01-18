@@ -8,7 +8,7 @@ import org.scalatest.BeforeAndAfter
 import scalikejdbc._, SQLInterpolation._
 
 class FileinfosControllerSpec extends ScalatraFlatSpec with SkinnyTestSupport with DBSettings with BeforeAndAfter {
-  addFilter(FileinfosController, "/*")
+  addFilter(Controllers.fileinfos, "/*")
 
   def fileinfo = FactoryGirl(Fileinfo).create()
 

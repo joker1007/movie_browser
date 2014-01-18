@@ -25,10 +25,10 @@ class BackendWorker extends Actor {
 
 class FileGatherWorker extends Actor {
   def receive = {
-    case Target(id, fullpath, _, _, _) =>
+    case target: Target =>
       val router = context.actorOf(Props[FileInfoCreateWorker].withRouter(RoundRobinRouter(nrOfInstances = 4)))
-      FileGather.gather(fullpath, router)
-      Target.updateById(id).withAttributes('last_updated_at -> Some(DateTime.now()))
+      FileGather.gather(target, router)
+      Target.updateById(target.id).withAttributes('last_updated_at -> Some(DateTime.now()))
   }
 }
 
@@ -41,8 +41,8 @@ class FetchMetadataWorker extends Actor {
 
 class FileInfoCreateWorker extends Actor {
   def receive = {
-    case file: Path =>
-      val oid = Fileinfo.createFromFile(file)
+    case (target: Target, file: Path) =>
+      val oid = Fileinfo.createFromFile(target, file)
       oid match {
         case Some(id) => println(s"Create: ${file.toString()}")
         case None =>

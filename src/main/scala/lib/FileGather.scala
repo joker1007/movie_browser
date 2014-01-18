@@ -2,26 +2,25 @@ package lib
 
 import scalax.file.Path
 import scalax.file.PathMatcher.{IsFile, IsDirectory}
-import model.Fileinfo
+import model.{Target, Fileinfo}
 import akka.actor.ActorRef
 
 object FileGather {
-  def gather(pathName: String, router: ActorRef) {
-    val path = Path(pathName, '/')
-    gather(path, router)
-  }
+  def gather(target: Target, router: ActorRef) {
+    val path = Path(target.fullpath, '/')
+    if (!path.isDirectory)
+      return
 
-  def gather(path: Path, router: ActorRef) {
-    val pathSet = path.children()
-    pathSet.foreach {
-      case IsDirectory(f) =>
-        gather(f, router)
-      case IsFile(f) =>
-        process(f, router: ActorRef)
+    def processDir(path: Path, router: ActorRef) {
+      val pathSet = path.children()
+      pathSet.foreach {
+        case IsDirectory(f) =>
+          processDir(f, router)
+        case IsFile(f) =>
+          router ! (target, f)
+      }
     }
-  }
 
-  def process(file: Path, router: ActorRef) {
-    router ! file
+    processDir(path, router)
   }
 }

@@ -5,6 +5,10 @@
   %div(class="controls row")
     %div(class="col-xs-12")
       %input(type="text" name="fullpath" class="form-control" value={s.params.fullpath})
+  %label(class="control-label" for="asPath") #{s.i18n.get("target.asPath")}
+  %div(class="controls row")
+    %div(class="col-xs-12")
+      %input(type="text" name="asPath" class="form-control" value={s.params.asPath})
 
 %div(class="form-actions")
   =unescape(s.csrfHiddenInputTag)

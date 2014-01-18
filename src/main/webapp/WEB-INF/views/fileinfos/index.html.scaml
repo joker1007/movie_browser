@@ -26,10 +26,10 @@
     %tr
       %td #{fileinfo.id}
       %td
-        %a(href="file://#{fileinfo.fullpath}")= fileinfo.basename
+        %a(href="file://#{fileinfo.asPath}")= fileinfo.basename
         %br
         - for (metadata <- fileinfo.fileMetadata)
-          %a(href="file://#{fileinfo.fullpath}")= metadata.title
+          %a(href="file://#{fileinfo.asPath}")= metadata.title
         %img.lazy(data-original={url(ThumbnailsController.showUrl, "hash" -> fileinfo.md5)})
       %td.metadata
         - for (metadata <- fileinfo.fileMetadata)
