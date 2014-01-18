@@ -129,7 +129,7 @@ case class Fileinfo(
   def renameWithMetadata(prefix: String): Fileinfo = {
     val fm = FileMetadata.defaultAlias
     val metadata = FileMetadata.findBy(sqls.eq(fm.md5, md5)).get
-    val to = metadata.mkName(prefix, basename)
+    val to = metadata.mkName(prefix, FilenameUtils.getExtension(basename))
     rename(to)
   }
 }
