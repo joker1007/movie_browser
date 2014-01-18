@@ -57,7 +57,7 @@ case class FileMetadata(
       case None => ""
     }
 
-    val actorsName = actors match {
+    val actorsName = actors.toList match {
       case x@a :: as => s" - ${x.mkString(" ")}"
       case Nil => ""
     }
