@@ -124,6 +124,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   val MOVIE_EXTENSIONS = Array("mp4", "m4v", "mpg", "avi", "wmv", "ogm", "ogg", "asf", "mkv", "mov", "flv")
   val ARCHIVE_EXTENSIONS = Array("zip", "rar")
   val IMAGE_EXTENSIONS = Array("jpg", "jpeg", "png")
+  val FILTER_WORDS = Array("""^\(18禁ゲーム\)""".r, """^\(同人ゲーム\)""".r, """^\(同人ソフト\)""".r)
   val EXTENSIONS = MOVIE_EXTENSIONS ++ ARCHIVE_EXTENSIONS
 
   override def extract(rs: WrappedResultSet, rn: ResultName[Fileinfo]): Fileinfo = new Fileinfo(
@@ -145,15 +146,11 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     if (!EXTENSIONS.contains(file.extension.getOrElse("")))
       return None
 
-    val f = defaultAlias
+    val jPath = java.nio.file.Paths.get(file.path)
+    if (FILTER_WORDS.exists(_.findFirstIn(jPath.getFileName.toString).isDefined))
+      return None
 
-    // migration
-    findBy(sqls.eq(f.fullpath, file.path)) match {
-      case Some(fileinfo) =>
-        val jPath = java.nio.file.Paths.get(fileinfo.fullpath)
-        Fileinfo.updateById(fileinfo.id).withAttributes('basename -> jPath.getFileName.toString, 'targetId -> target.id, 'relativePath -> file.relativize(target.path).path)
-      case None =>
-    }
+    val f = defaultAlias
 
     if (isExistByFullpath(file.path) && !force)
       return None
@@ -167,7 +164,6 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       case _ =>
     }
 
-    val jPath = java.nio.file.Paths.get(file.path)
     val fileinfoId = createWithAttributes(
       'md5 -> sum,
       'fullpath -> file.path,
