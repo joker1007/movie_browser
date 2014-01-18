@@ -164,19 +164,17 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       case _ =>
     }
 
-    val fileinfoId = createWithAttributes(
-      'md5 -> sum,
-      'fullpath -> file.path,
-      'basename -> jPath.getFileName.toString,
-      'targetId -> target.id,
-      'relativePath -> file.relativize(target.path).path,
-      'filesize -> file.size
+    val (fullpath, basename, targetId, relativePath, filesize) = (
+      file.path,
+      jPath.getFileName.toString,
+      target.id,
+      file.relativize(target.path).path,
+      file.size
     )
-
-    val fileinfo = findById(fileinfoId).get
+    val fileinfo = createAndReturnEntity(sum, fullpath, basename, relativePath, targetId, filesize.getOrElse(0))
     new ThumbnailGenerator(fileinfo).createThumbnail()
 
-    Some(fileinfoId)
+    Some(fileinfo.id)
   }
 
   private[this] def getMd5FromFile(file: Path): String = {
@@ -190,6 +188,28 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
   private[this] def isExistByFullpath(fullpath: String)(implicit s: DBSession = autoSession): Boolean = {
     val f = defaultAlias
     countBy(sqls.eq(f.fullpath, fullpath)) > 0
+  }
+
+  private[this] def createAndReturnEntity(md5: String, fullpath: String, basename: String, relativePath: String, targetId: Long, filesize: Long): Fileinfo = {
+    val fileinfoId = createWithAttributes(
+      'md5 -> md5,
+      'fullpath -> fullpath,
+      'basename -> basename,
+      'targetId -> targetId,
+      'relativePath -> relativePath,
+      'filesize -> filesize
+    )
+
+    Fileinfo(
+      id = fileinfoId,
+      md5 = md5,
+      fullpath = fullpath,
+      basename = basename,
+      targetId = targetId,
+      relativePath = relativePath,
+      filesize = filesize,
+      createdAt = DateTime.now()
+    )
   }
 
   private[this] def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax, Target.syntax)
