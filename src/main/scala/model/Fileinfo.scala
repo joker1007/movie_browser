@@ -151,7 +151,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     findBy(sqls.eq(f.fullpath, file.path)) match {
       case Some(fileinfo) =>
         val jPath = java.nio.file.Paths.get(fileinfo.fullpath)
-        Fileinfo.updateById(fileinfo.id).withAttributes('basename -> jPath.getFileName, 'targetId -> target.id, 'relativePath -> file.relativize(target.path).path)
+        Fileinfo.updateById(fileinfo.id).withAttributes('basename -> jPath.getFileName.toString, 'targetId -> target.id, 'relativePath -> file.relativize(target.path).path)
       case None =>
     }
 
