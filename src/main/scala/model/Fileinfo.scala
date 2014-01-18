@@ -117,7 +117,7 @@ case class Fileinfo(
 
   def rename(to: String): Fileinfo = {
     val origin = Path(fullpath, '/')
-    val renamed = Path(fullpath, '/') / to
+    val renamed = Path(fullpath, '/').parent.get / to
     val target = Target.findById(targetId).get
     val newRelativePath = renamed.relativize(target.path).path
     val newBaseName = FilenameUtils.getName(renamed.path)
