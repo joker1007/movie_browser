@@ -55,5 +55,7 @@
         %a(href="/fileinfos/download/#{fileinfo.id.toString}") Download
         %br
         %a(href={url(Controllers.fileinfos.showUrl, "id" -> fileinfo.id.toString)}) View
+        %br
+        %a.rename(href={url(Controllers.fileinfos.renameUrl, "id" -> fileinfo.id.toString)}) Rename
 
 != paginate(Controllers.fileinfos.indexUrl, fileinfos, currentPage, fileinfosCount.toInt, Fileinfo.PER_PAGE)

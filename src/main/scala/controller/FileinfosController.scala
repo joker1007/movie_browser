@@ -134,8 +134,21 @@ class FileinfosController(system: ActorSystem) extends SkinnyResource with Futur
     }.getOrElse(haltWithBody(404))
   }.getOrElse(haltWithBody(404))
 
+  def rename = params.getAs[Long]("id").map {id =>
+    Fileinfo.findById(id).map {fileinfo =>
+      fileinfo.renameWithMetadata("(AV)") match {
+        case Some(f) =>
+          flash += "notice" -> s"Rename to ${f.basename}"
+        case None =>
+          flash += "notice" -> s"No metadata"
+      }
+      redirect("/")
+    }.getOrElse(haltWithBody(404))
+  }.getOrElse(haltWithBody(404))
+
   val rootUrl = get("/")(showResources).as('root)
   val downloadUrl = get(s"/${resourcesName}/download/:id")(download).as('download)
   val encodeUrl = get(s"/${resourcesName}/encode/:id")(encode).as('encode)
   val extractUrl = get(s"/${resourcesName}/extract/:id/:page")(extract).as('extract)
+  val renameUrl = get(s"/${resourcesName}/rename/:id")(rename).as('rename)
 }

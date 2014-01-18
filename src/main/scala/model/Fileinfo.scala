@@ -126,11 +126,12 @@ case class Fileinfo(
     copy(fullpath = renamed.path, relativePath = newRelativePath, basename = newBaseName)
   }
 
-  def renameWithMetadata(prefix: String): Fileinfo = {
+  def renameWithMetadata(prefix: String): Option[Fileinfo] = {
     val fm = FileMetadata.defaultAlias
-    val metadata = FileMetadata.findBy(sqls.eq(fm.md5, md5)).get
-    val to = metadata.mkName(prefix, FilenameUtils.getExtension(basename))
-    rename(to)
+    FileMetadata.findBy(sqls.eq(fm.md5, md5)).map {metadata =>
+      val to = metadata.mkName(prefix, FilenameUtils.getExtension(basename))
+      rename(to)
+    }
   }
 }
 
