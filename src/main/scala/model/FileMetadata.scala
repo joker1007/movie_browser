@@ -62,7 +62,7 @@ case class FileMetadata(
       case Nil => ""
     }
 
-    s"$prefix$makerName$title$actorsName.$extension"
+    s"$prefix$makerName$title$actorsName.$extension".replaceAll("〜", "～")
   }
 }
 
