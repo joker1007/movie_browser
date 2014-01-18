@@ -139,7 +139,7 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     targetId = rs.long(rn.targetId)
   )
 
-  def createFromFile(target: Target, file: Path, force: Boolean = false): Option[Long] = {
+  def createFromFile(target: Target, file: Path, force: Boolean = false)(implicit s: DBSession = autoSession): Option[Long] = {
     if (!file.canRead)
       return None
 
@@ -187,103 +187,87 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     md5.digest().map(0xFF & _).map { "%02x".format(_) }.foldLeft(""){_ + _}
   }
 
-  def isExistByFullpath(fullpath: String): Boolean = {
+  private[this] def isExistByFullpath(fullpath: String)(implicit s: DBSession = autoSession): Boolean = {
     val f = defaultAlias
     countBy(sqls.eq(f.fullpath, fullpath)) > 0
   }
 
-  def searchByPath(pathString: String, page: Int = 1): List[Fileinfo] = {
-    findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc")
-  }
+  private[this] def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax, Target.syntax)
 
-  def searchByPathWithTotalCount(pathString: String, page: Int = 1): (List[Fileinfo], Long) = {
-    val count = countBy(sqls.like(defaultAlias.fullpath, s"%$pathString%"))
-    (findAllByPaging(sqls.like(defaultAlias.fullpath, s"%$pathString%"), PER_PAGE, (page - 1) * PER_PAGE, sqls"${defaultAlias.fullpath} asc"), count)
-  }
-
-  def joinTableSyntaxes = (Fileinfo.syntax, FileMetadata.syntax, MetadataItemInfo.syntax, ItemInfo.syntax, Target.syntax)
-
-  def noMetadata: List[Fileinfo] = {
+  def noMetadata()(implicit s: DBSession = autoSession): List[Fileinfo] = {
     val (f, fm, _, _, _) = joinTableSyntaxes
-    DB.readOnly {implicit session =>
+    withSQL {
       select.from(Fileinfo as f)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
-        .where.isNull(fm.id).toSQL.map(Fileinfo(f)).list().apply()
-    }
+        .where.isNull(fm.id)
+    }.map(Fileinfo(f)).list().apply()
   }
 
-  def joinAllByPaging(page: Int = 1): List[Fileinfo] = {
+  def joinAllByPaging(page: Int = 1)(implicit s: DBSession = autoSession): List[Fileinfo] = {
     val (f, fm, mii, ii, t) = joinTableSyntaxes
 
-    val ids = DB.readOnly {implicit session =>
+    val ids =
       withSQL {
         select(f.id).from(Fileinfo as f)
           .innerJoin(Target as t).on(f.targetId, t.id)
           .orderBy(f.basename)
           .limit(PER_PAGE).offset(PER_PAGE * (page - 1))
       }.map(_.int(1)).list().apply()
-    }
 
-    DB.readOnly {implicit session =>
-      select.from(Fileinfo as f)
-        .innerJoin(Target as t).on(f.targetId, t.id)
-        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
-        .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
-        .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
-        .where(sqls.in(f.id, ids))
-        .orderBy(f.basename)
-        .toSQL
-        .one {rs =>
-          val target = Target(t)(rs)
-          Fileinfo(f)(rs).copy(target = Some(target))
-        }
-        .toManies(
-          rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
-          rs => None: Option[MetadataItemInfo],
-          rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
-        ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
+    select.from(Fileinfo as f)
+      .innerJoin(Target as t).on(f.targetId, t.id)
+      .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
+      .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
+      .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
+      .where(sqls.in(f.id, ids))
+      .orderBy(f.basename)
+      .toSQL
+      .one {rs =>
+      val target = Target(t)(rs)
+      Fileinfo(f)(rs).copy(target = Some(target))
     }
+      .toManies(
+        rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
+        rs => None: Option[MetadataItemInfo],
+        rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
+      ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
   }
 
-  def searchJoinAllByPaging(page: Int = 1, searchWord: Option[String] = None): List[Fileinfo] = {
+  def searchJoinAllByPaging(page: Int = 1, searchWord: Option[String] = None)(implicit s: DBSession = autoSession): List[Fileinfo] = {
     if (searchWord.isEmpty)
       return joinAllByPaging(page)
 
     val (f, fm, mii, ii, t) = joinTableSyntaxes
-    DB.readOnly {implicit session =>
-      select.from(Fileinfo as f)
-        .innerJoin(Target as t).on(f.targetId, t.id)
-        .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
-        .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
-        .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
-        .where(searchWord.map(w => sqls.like(f.fullpath, "%" + w + "%").or.eq(ii.name, w)))
-        .orderBy(f.basename)
-        .toSQL
-        .one {rs =>
-          val target = Target(t)(rs)
-          Fileinfo(f)(rs).copy(target = Some(target))
-        }
-        .toManies(
-          rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
-          rs => None: Option[MetadataItemInfo],
-          rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
-        ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
-        .drop(PER_PAGE * (page - 1)).take(PER_PAGE)
+    select.from(Fileinfo as f)
+      .innerJoin(Target as t).on(f.targetId, t.id)
+      .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
+      .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
+      .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
+      .where(searchWord.map(w => sqls.like(f.fullpath, "%" + w + "%").or.eq(ii.name, w)))
+      .orderBy(f.basename)
+      .toSQL
+      .one {rs =>
+      val target = Target(t)(rs)
+      Fileinfo(f)(rs).copy(target = Some(target))
     }
+      .toManies(
+        rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
+        rs => None: Option[MetadataItemInfo],
+        rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
+      ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
+      .drop(PER_PAGE * (page - 1)).take(PER_PAGE)
   }
 
-  def joinAllByPagingWithTotalCount(page: Int = 1, searchWord: Option[String] = None): (List[Fileinfo], Long) = {
+  def joinAllByPagingWithTotalCount(page: Int = 1, searchWord: Option[String] = None)(implicit s: DBSession = autoSession): (List[Fileinfo], Long) = {
     val (f, fm, mii, ii, t) = joinTableSyntaxes
-    val fileinfoCount = DB.readOnly {implicit session =>
+    val fileinfoCount = withSQL {
       select(sqls.count(sqls.distinct(f.id))).from(Fileinfo as f)
         .innerJoin(Target as t).on(f.targetId, t.id)
         .leftJoin(FileMetadata as fm).on(f.md5, fm.md5)
         .leftJoin(MetadataItemInfo as mii).on(fm.id, mii.fileMetadataId)
         .leftJoin(ItemInfo as ii).on(mii.itemInfoId, ii.id)
         .where(searchWord.map(w => sqls.like(f.fullpath, "%" + w + "%").or.eq(ii.name, w)))
-        .toSQL
-        .map(_.int(1)).single.apply().get
-    }
+    }.map(_.int(1)).single.apply().get
     (searchJoinAllByPaging(page, searchWord), fileinfoCount)
   }
 
