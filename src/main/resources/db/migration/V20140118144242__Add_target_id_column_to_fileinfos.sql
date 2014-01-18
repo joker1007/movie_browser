@@ -1,1 +1,0 @@
-alter table fileinfos add column target_id bigint not null default 0

@@ -1,1 +1,0 @@
-alter table fileinfos add column relative_path varchar(512) not null default ''
