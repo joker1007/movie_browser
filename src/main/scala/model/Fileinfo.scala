@@ -7,6 +7,7 @@ import scalax.file.Path
 import java.security.MessageDigest
 import model.dmm.{DmmItemInfo, DmmItem, ApiClient}
 import org.slf4j.LoggerFactory
+import org.apache.commons.io.{FileUtils, FilenameUtils}
 
 object IsMovie {
   def unapply(f: Fileinfo): Option[Fileinfo] = {
@@ -113,6 +114,24 @@ case class Fileinfo(
       case e: org.h2.jdbc.JdbcSQLException =>
     }
   }
+
+  def rename(to: String): Fileinfo = {
+    val origin = Path(fullpath, '/')
+    val renamed = Path(fullpath, '/') / to
+    val target = Target.findById(targetId).get
+    val newRelativePath = renamed.relativize(target.path).path
+    val newBaseName = FilenameUtils.getName(renamed.path)
+    FileUtils.moveFile(origin.jfile, renamed.jfile)
+    Fileinfo.updateById(id).withAttributes('fullpath -> renamed.path, 'relativePath -> newRelativePath, 'basename -> newBaseName)
+    copy(fullpath = renamed.path, relativePath = newRelativePath, basename = newBaseName)
+  }
+
+  def renameWithMetadata(prefix: String): Fileinfo = {
+    val fm = FileMetadata.defaultAlias
+    val metadata = FileMetadata.findBy(sqls.eq(fm.md5, md5)).get
+    val to = metadata.mkName(prefix, basename)
+    rename(to)
+  }
 }
 
 object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Fileinfo] {
@@ -146,8 +165,8 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     if (!EXTENSIONS.contains(file.extension.getOrElse("")))
       return None
 
-    val jPath = java.nio.file.Paths.get(file.path)
-    if (FILTER_WORDS.exists(_.findFirstIn(jPath.getFileName.toString).isDefined))
+    val basename = FilenameUtils.getName(file.path)
+    if (FILTER_WORDS.exists(_.findFirstIn(basename).isDefined))
       return None
 
     val f = defaultAlias
@@ -164,9 +183,8 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       case _ =>
     }
 
-    val (fullpath, basename, targetId, relativePath, filesize) = (
+    val (fullpath, targetId, relativePath, filesize) = (
       file.path,
-      jPath.getFileName.toString,
       target.id,
       file.relativize(target.path).path,
       file.size
@@ -291,4 +309,12 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
     (searchJoinAllByPaging(page, searchWord), fileinfoCount)
   }
 
+  def deleteAllNothingFile()(implicit s: DBSession = autoSession): Int = {
+    val f = defaultAlias
+    val ids = findAllModels().withFilter {fi =>
+      !Path(fi.fullpath, '/').exists
+    }.map(_.id)
+    deleteBy(sqls.in(f.id, ids))
+    ids.size
+  }
 }

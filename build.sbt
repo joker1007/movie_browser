@@ -14,3 +14,4 @@ libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4
 
 libraryDependencies += "org.apache.commons" % "commons-compress" % "1.6"
 
+libraryDependencies += "commons-io" % "commons-io" % "2.4"

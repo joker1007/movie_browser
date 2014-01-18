@@ -3,6 +3,7 @@ package model
 import skinny.orm._, feature._
 import scalikejdbc._, SQLInterpolation._
 import org.joda.time._
+import org.apache.commons.io.FilenameUtils
 
 case class FileMetadata(
   id: Long,
@@ -48,6 +49,20 @@ case class FileMetadata(
       info <- itemInfos
       if info.kind == kind
     } yield info.name
+  }
+
+  def mkName(prefix: String, extension: String): String = {
+    val makerName = maker match {
+      case Some(m) => s" [$m] "
+      case None => ""
+    }
+
+    val actorsName = actors match {
+      case x@a :: as => s" - ${x.mkString(" ")}"
+      case Nil => ""
+    }
+
+    s"$prefix$makerName$title$actorsName.$extension"
   }
 }
 
