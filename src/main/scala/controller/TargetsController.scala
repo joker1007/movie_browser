@@ -3,15 +3,17 @@ package controller
 import skinny._
 import skinny.validator._
 import model.Target
-import lib.FileGather
-import scalax.file.Path
 
 object TargetsController extends SkinnyResource {
   protectFromForgery()
-  override def scalateExtension = "scaml"
+
   override def model = Target
   override def resourcesName = "targets"
   override def resourceName = "target"
+
+  override def resourcesBasePath = s"/${toSnakeCase(resourcesName)}"
+  override def viewsDirectoryPath = s"/${toSnakeCase(resourcesName)}"
+  override def useSnakeCasedParamKeys = false
 
   override def createForm = validation(createParams,
     paramKey("fullpath") is required & maxLength(512),
