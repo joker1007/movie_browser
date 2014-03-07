@@ -1,4 +1,4 @@
--@val target: model.Target
+-@val item: model.Target
 -@val s: skinny.Skinny
 
 %h3 #{s.i18n.get("target.detail")}
@@ -9,19 +9,19 @@
   %thead
     %tr
       %th #{s.i18n.get("target.id")}
-      %td #{target.id}
+      %td #{item.id}
     %tr
       %th #{s.i18n.get("target.fullpath")}
-      %td #{target.fullpath}
+      %td #{item.fullpath}
     %tr
       %th #{s.i18n.get("target.asPath")}
-      %td #{target.asPath}
+      %td #{item.asPath}
     %tr
       %th #{s.i18n.get("target.lastUpdatedAt")}
-      %td #{target.lastUpdatedAt}
+      %td #{item.lastUpdatedAt}
 
 %hr
 %div(class="form-actions")
   %a(class="btn btn-default" href={url(TargetsController.indexUrl)}) #{s.i18n.get("backToList")}
-  %a(href={url(TargetsController.editUrl, "id" -> target.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
-  %a(data-method="delete" data-confirm={s.i18n.get("target.delete.confirm")} href={url(TargetsController.deleteUrl, "id" -> target.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}
+  %a(href={url(TargetsController.editUrl, "id" -> item.id.toString)} class="btn btn-info") #{s.i18n.get("edit")}
+  %a(data-method="delete" data-confirm={s.i18n.get("target.delete.confirm")} href={url(TargetsController.deleteUrl, "id" -> item.id.toString)} rel="nofollow" class="btn btn-danger") #{s.i18n.get("delete")}

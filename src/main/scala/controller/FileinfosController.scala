@@ -18,7 +18,6 @@ import scalax.file.Path
 
 class FileinfosController(system: ActorSystem) extends SkinnyResource with FutureSupport {
   protectFromForgery()
-  override def scalateExtension = "scaml"
   override def model = Fileinfo
   override def resourcesName = "fileinfos"
   override def resourceName = "fileinfo"
