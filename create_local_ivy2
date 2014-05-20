@@ -16,5 +16,6 @@ export SBT_OPTS=\"-XX:+CMSClassUnloadingEnabled \${PERM_OPT}\"
 fi
 
 source ${sbt_config}
-exec java -Xmx1024M ${SBT_OPTS} -jar ${current_dir}/bin/sbt-launch.jar "$@"
+export SBT_OPTS="-Dsbt.ivy.home=${current_dir}/ivy2 -XX:+CMSClassUnloadingEnabled ${PERM_OPT}"
+exec java -Xmx1024M ${SBT_OPTS} -jar ${current_dir}/bin/sbt-launch.jar compile
 

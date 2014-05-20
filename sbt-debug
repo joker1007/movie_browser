@@ -16,5 +16,7 @@ export SBT_OPTS=\"-XX:+CMSClassUnloadingEnabled \${PERM_OPT}\"
 fi
 
 source ${sbt_config}
-exec java -Xmx1024M ${SBT_OPTS} -jar ${current_dir}/bin/sbt-launch.jar "$@"
+DEBUG_PORT=$1
+shift
+exec java -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=127.0.0.1:${DEBUG_PORT} -Xmx1024M ${SBT_OPTS} -jar ${current_dir}/bin/sbt-launch.jar "$@"
 
