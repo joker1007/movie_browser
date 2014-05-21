@@ -262,13 +262,13 @@ object Fileinfo extends SkinnyCRUDMapper[Fileinfo] with TimestampsFeature[Filein
       .orderBy(f.basename)
       .toSQL
       .one {rs =>
-      val target = Target(t)(rs)
-      Fileinfo(f)(rs).copy(target = Some(target))
-    }
+        val target = Target(t)(rs)
+        Fileinfo(f)(rs).copy(target = Some(target))
+      }
       .toManies(
-        rs => rs.longOpt(fm.id).map(_ => FileMetadata(fm)(rs)),
+        rs => rs.longOpt("i_on_file_metadatas").map(_ => FileMetadata(fm)(rs)),
         rs => None: Option[MetadataItemInfo],
-        rs => rs.longOpt(ii.id).map(_ => ItemInfo(ii)(rs))
+        rs => rs.longOpt("i_on_item_infos").map(_ => ItemInfo(ii)(rs))
       ).map((f, fm, n, ii) => f.copy(fileMetadata = fm.headOption.map(_.copy(itemInfos = ii)))).list().apply()
   }
 

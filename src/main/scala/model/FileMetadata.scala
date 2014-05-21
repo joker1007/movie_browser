@@ -70,6 +70,8 @@ object FileMetadata extends SkinnyCRUDMapper[FileMetadata] with TimestampsFeatur
   override val tableName = "file_metadatas"
   override val defaultAlias = createAlias("fm")
 
+  def opt(fm: ResultName[FileMetadata])(rs: WrappedResultSet) = rs.longOpt(fm.id).map(_ => extract(rs, fm))
+
   val infos = hasManyThrough[ItemInfo](MetadataItemInfo, ItemInfo, (fm, iis) => fm.copy(itemInfos = iis)).byDefault
 
   override def extract(rs: WrappedResultSet, rn: ResultName[FileMetadata]): FileMetadata = new FileMetadata(
