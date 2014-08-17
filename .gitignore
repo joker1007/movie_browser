@@ -16,8 +16,6 @@ task/src/main/resources/
 build/target/
 standalone-build/
 
-# use glob syntax.
-syntax: glob
 *.ser
 *.class
 *~
@@ -64,8 +62,5 @@ logs
 # Skinny's default ivy.home
 ivy2
 
-.idea
+node_modules
 
-src/main/webapp/videos/*
-src/main/webapp/extracted/*
-task/src/main/resources
