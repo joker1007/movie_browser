@@ -1,0 +1,31 @@
+-@val item: model.Target
+-@val s: skinny.Skinny
+
+-# Be aware of package imports.
+-# 1. src/main/scala/templates/ScalatePackage.scala
+-# 2. scalateTemplateConfig in project/Build.scala
+
+h3 #{s.i18n.getOrKey("target.detail")}
+hr
+-for (notice <- s.flash.notice)
+  p(class="alert alert-info") #{notice}
+table(class="table table-bordered")
+  thead
+    tr
+      th #{s.i18n.getOrKey("target.id")}
+      td #{item.id}
+    tr
+      th #{s.i18n.getOrKey("target.fullpath")}
+      td #{item.fullpath}
+    tr
+      th #{s.i18n.getOrKey("target.asPath")}
+      td #{item.asPath}
+    tr
+      th #{s.i18n.getOrKey("target.lastUpdatedAt")}
+      td #{item.lastUpdatedAt}
+
+hr
+div(class="form-actions")
+  a(class="btn btn-default" href={s.url(Controllers.targets.indexUrl)}) #{s.i18n.getOrKey("backToList")}
+  a(href={s.url(Controllers.targets.editUrl, "id" -> item.id)} class="btn btn-info") #{s.i18n.getOrKey("edit")}
+  a(data-method="delete" data-confirm={s.i18n.getOrKey("target.delete.confirm")} href={s.url(Controllers.targets.destroyUrl, "id" -> item.id)} rel="nofollow" class="btn btn-danger") #{s.i18n.getOrKey("delete")}

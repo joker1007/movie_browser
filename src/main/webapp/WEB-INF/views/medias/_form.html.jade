@@ -1,0 +1,77 @@
+-@val s: skinny.Skinny
+-@val keyAndErrorMessages: skinny.KeyAndErrorMessages
+
+-# Be aware of package imports.
+-# 1. src/main/scala/templates/ScalatePackage.scala
+-# 2. scalateTemplateConfig in project/Build.scala
+
+div(class="form-group")
+  label(class="control-label" for="md5") #{s.i18n.getOrKey("media.md5")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("md5")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="md5" class="form-control" value={s.params.md5})
+    - keyAndErrorMessages.get("md5").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-group")
+  label(class="control-label" for="fullpath") #{s.i18n.getOrKey("media.fullpath")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("fullpath")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="fullpath" class="form-control" value={s.params.fullpath})
+    - keyAndErrorMessages.get("fullpath").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-group")
+  label(class="control-label" for="relative_path") #{s.i18n.getOrKey("media.relativePath")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("relative_path")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="relative_path" class="form-control" value={s.params.relative_path})
+    - keyAndErrorMessages.get("relative_path").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-group")
+  label(class="control-label" for="basename") #{s.i18n.getOrKey("media.basename")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("basename")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="basename" class="form-control" value={s.params.basename})
+    - keyAndErrorMessages.get("basename").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-group")
+  label(class="control-label" for="filesize") #{s.i18n.getOrKey("media.filesize")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("filesize")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="filesize" class="form-control" value={s.params.filesize})
+    - keyAndErrorMessages.get("filesize").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-group")
+  label(class="control-label" for="target_id") #{s.i18n.getOrKey("media.targetId")}
+  div(class="controls row")
+    div(class={if(keyAndErrorMessages.hasErrors("target_id")) "has-error" else ""})
+      div(class="col-xs-12")
+        input(type="text" name="target_id" class="form-control" value={s.params.target_id})
+    - keyAndErrorMessages.get("target_id").map { errors =>
+      div(class="col-xs-12 has-error")
+        - for (error <- errors)
+          label(class="control-label") #{error}
+    - }
+div(class="form-actions")
+  =unescape(s.csrfHiddenInputTag)
+  input(type="submit" class="btn btn-primary" value={s.i18n.getOrKey("submit")})
+    a(class="btn btn-default" href={s.url(Controllers.medias.indexUrl)}) #{s.i18n.getOrKey("cancel")}

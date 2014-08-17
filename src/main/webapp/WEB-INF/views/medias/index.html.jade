@@ -1,0 +1,50 @@
+-@val s: skinny.Skinny
+-@val items: Seq[model.Media]
+-@val totalPages: Int
+
+-# Be aware of package imports.
+-# 1. src/main/scala/templates/ScalatePackage.scala
+-# 2. scalateTemplateConfig in project/Build.scala
+
+h3 #{s.i18n.getOrKey("media.list")}
+hr
+-for (notice <- s.flash.notice)
+  p(class="alert alert-info") #{notice}
+
+- if (totalPages > 1)
+  ul.pagination
+    li
+      a(href={s.url(Controllers.medias.indexUrl, "page" -> 1)}) &laquo;
+    - for (i <- (1 to totalPages))
+      li
+        a(href={s.url(Controllers.medias.indexUrl, "page" -> i)}) #{i}
+    li
+      a(href={s.url(Controllers.medias.indexUrl, "page" -> totalPages)}) &raquo;
+
+table(class="table table-bordered")
+  thead
+    tr
+      th #{s.i18n.getOrKey("media.id")}
+      th #{s.i18n.getOrKey("media.md5")}
+      th #{s.i18n.getOrKey("media.fullpath")}
+      th #{s.i18n.getOrKey("media.relativePath")}
+      th #{s.i18n.getOrKey("media.basename")}
+      th #{s.i18n.getOrKey("media.filesize")}
+      th #{s.i18n.getOrKey("media.targetId")}
+      th
+  tbody
+  -for (item <- items)
+    tr
+      td #{item.id}
+      td #{item.md5}
+      td #{item.fullpath}
+      td #{item.relativePath}
+      td #{item.basename}
+      td #{item.filesize}
+      td #{item.targetId}
+      td
+        a(href={s.url(Controllers.medias.showUrl, "id" -> item.id)} class="btn btn-default") #{s.i18n.getOrKey("detail")}
+        a(href={s.url(Controllers.medias.editUrl, "id" -> item.id)} class="btn btn-info") #{s.i18n.getOrKey("edit")}
+        a(data-method="delete" data-confirm={s.i18n.getOrKey("media.delete.confirm")} href={s.url(Controllers.medias.destroyUrl, "id" -> item.id)} rel="nofollow" class="btn btn-danger") #{s.i18n.getOrKey("delete")}
+
+a(href={s.url(Controllers.medias.newUrl)} class="btn btn-primary") #{s.i18n.getOrKey("new")}
