@@ -8,7 +8,7 @@ import org.joda.time._
 case class Thumbnail(
   id: Long,
   md5: String,
-  data: String,
+  data: Array[Byte],
   createdAt: DateTime,
   updatedAt: DateTime
 )
@@ -17,11 +17,14 @@ object Thumbnail extends SkinnyCRUDMapper[Thumbnail] with TimestampsFeature[Thum
   override lazy val tableName = "thumbnails"
   override lazy val defaultAlias = createAlias("t")
 
-  override def extract(rs: WrappedResultSet, rn: ResultName[Thumbnail]): Thumbnail = new Thumbnail(
-    id = rs.get(rn.id),
-    md5 = rs.get(rn.md5),
-    data = rs.get(rn.data),
-    createdAt = rs.get(rn.createdAt),
-    updatedAt = rs.get(rn.updatedAt)
-  )
+  override def extract(rs: WrappedResultSet, rn: ResultName[Thumbnail]): Thumbnail = {
+    val b = rs.blob(rn.data)
+    new Thumbnail(
+      id = rs.get(rn.id),
+      md5 = rs.get(rn.md5),
+      data = b.getBytes(1, b.length().toInt),
+      createdAt = rs.get(rn.createdAt),
+      updatedAt = rs.get(rn.updatedAt)
+    )
+  }
 }

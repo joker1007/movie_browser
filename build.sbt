@@ -22,3 +22,8 @@ DBSettings.initialize()
 // sbt-dependency-graph
 //net.virtualvoid.sbt.graph.Plugin.graphSettings
 
+libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+  "org.apache.commons" % "commons-compress" % "1.6",
+  "commons-io" % "commons-io" % "2.4"
+)
