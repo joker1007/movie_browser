@@ -12,6 +12,33 @@ import skinny.orm.feature._
 
 import scala.io.Source
 
+object IsMovie {
+  def unapply(f: Media): Option[Media] = {
+    if (f.isMovie)
+      Some(f)
+    else
+      None
+  }
+}
+
+object IsArchive {
+  def unapply(f: Media): Option[Media] = {
+    if (f.isArchive)
+      Some(f)
+    else
+      None
+  }
+}
+
+object IsZip {
+  def unapply(f: Media): Option[Media] = {
+    if (f.extension == "zip")
+      Some(f)
+    else
+      None
+  }
+}
+
 // If your model has +23 fields, switch this to normal class and mixin scalikejdbc.EntityEquality.
 case class Media(
   id: Long,
@@ -24,7 +51,13 @@ case class Media(
   createdAt: DateTime,
   updatedAt: DateTime,
   target: Option[Target] = None
-)
+) {
+  def isMovie: Boolean = Media.MOVIE_EXTENSIONS.contains(extension)
+
+  def isArchive: Boolean = Media.ARCHIVE_EXTENSIONS.contains(extension)
+
+  def extension: String = FilenameUtils.getExtension(fullpath)
+}
 
 object Media extends SkinnyCRUDMapper[Media] with TimestampsFeature[Media] {
   override lazy val tableName = "medias"

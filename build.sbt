@@ -24,6 +24,8 @@ DBSettings.initialize()
 
 libraryDependencies ++= Seq(
   "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
   "org.apache.commons" % "commons-compress" % "1.6",
-  "commons-io" % "commons-io" % "2.4"
+  "commons-io" % "commons-io" % "2.4",
+  "org.scalaz" %% "scalaz-core" % "7.1.0"
 )
