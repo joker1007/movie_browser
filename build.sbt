@@ -27,5 +27,7 @@ libraryDependencies ++= Seq(
   "org.scalacheck" %% "scalacheck" % "1.11.5" % "test",
   "org.apache.commons" % "commons-compress" % "1.6",
   "commons-io" % "commons-io" % "2.4",
-  "org.scalaz" %% "scalaz-core" % "7.1.0"
+  "org.scalaz" %% "scalaz-core" % "7.1.0",
+  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0",
+  "io.argonaut" %% "argonaut" % "6.1-M4"
 )

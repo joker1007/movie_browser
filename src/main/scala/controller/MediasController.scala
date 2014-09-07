@@ -1,56 +1,39 @@
 package controller
 
+import argonaut.Argonaut._
+import argonaut._
+import model.{Media, MediaRepository}
 import skinny._
-import skinny.validator._
-import _root_.controller._
-import model.Media
 
-class MediasController extends SkinnyResource with ApplicationController {
+class MediasController extends SkinnyController with ApplicationController {
   protectFromForgery()
 
-  override def model = Media
-  override def resourcesName = "medias"
-  override def resourceName = "media"
+  val pageSize = 100
 
-  override def resourcesBasePath = s"/${toSnakeCase(resourcesName)}"
-  override def useSnakeCasedParamKeys = true
+  def index = {
+    val pageNo = params.getAs[Int]("page").getOrElse(1)
+    val totalCount = Media.countAllModels()
+    val medias = MediaRepository.list(pageSize, pageNo)
+    contentType = Format.JSON.contentType
 
-  override def viewsDirectoryPath = s"/${resourcesName}"
+    val jMedias = medias.foldRight(Json.array()) {(m, j) =>
+      val json =
+        Json(
+          "id" := m.id,
+          "md5" := m.md5,
+          "fullpath" := m.fullpath,
+          "basename" := m.basename,
+          "filesize" := m.filesize,
+          "thumbnailUrl" := url(Controllers.thumbnails.showUrl, "hash" -> m.md5)
+        )
+      json -->>: j
+    }
 
-  override def createParams = Params(params)
-  override def createForm = validation(createParams,
-    paramKey("md5") is required & maxLength(128),
-    paramKey("fullpath") is required & maxLength(512),
-    paramKey("relative_path") is required & maxLength(512),
-    paramKey("basename") is required & maxLength(512),
-    paramKey("filesize") is required & numeric & longValue,
-    paramKey("target_id") is required & numeric & longValue
-  )
-  override def createFormStrongParameters = Seq(
-    "md5" -> ParamType.String,
-    "fullpath" -> ParamType.String,
-    "relative_path" -> ParamType.String,
-    "basename" -> ParamType.String,
-    "filesize" -> ParamType.Long,
-    "target_id" -> ParamType.Long
-  )
+    val response = Json(
+      "totalCount" := totalCount,
+      "items" := jMedias
+    )
 
-  override def updateParams = Params(params)
-  override def updateForm = validation(updateParams,
-    paramKey("md5") is required & maxLength(128),
-    paramKey("fullpath") is required & maxLength(512),
-    paramKey("relative_path") is required & maxLength(512),
-    paramKey("basename") is required & maxLength(512),
-    paramKey("filesize") is required & numeric & longValue,
-    paramKey("target_id") is required & numeric & longValue
-  )
-  override def updateFormStrongParameters = Seq(
-    "md5" -> ParamType.String,
-    "fullpath" -> ParamType.String,
-    "relative_path" -> ParamType.String,
-    "basename" -> ParamType.String,
-    "filesize" -> ParamType.Long,
-    "target_id" -> ParamType.Long
-  )
-
+    response.toString()
+  }
 }
